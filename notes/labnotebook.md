@@ -11,6 +11,7 @@ Complete a structured overview on the paper, especially on its technical aspects
 "Compromising Industrial Processes using Web-Based PLC Malware"
 Pickren, Shekari, Zonouz, Beyah - NDSS 2024
 Paper: [https://dx.doi.org/10.14722/ndss.2024.23049](https://dx.doi.org/10.14722/ndss.2024.23049)
+
 Artifacts: [https://zenodo.org/record/8279954](https://zenodo.org/record/8279954)
 
 ### Questions & Answers
@@ -62,3 +63,21 @@ Also, implementing CSP with *confidentiality* directive can be used to prevent e
 Read-only CDN for vendor-provided PLC can be used to prevent them from being overwritten. Also, using CSP directives for `src-script` can help. However, this immensely reduces practicality of the system design, requiring substantial front-end restructure. 
 
 PLC-configured web app firewalls (WAPs) can also be used to inspect non-web protocols such as SNMP, CIP, and Modbus. This measure can add latency to the system.
+
+### Artifacts Downloaded
+
+For Day 1, I conducted a brief overview on some of the exploit programs in the provided artifacts. 
+
+#### `AB_EXPLOIT/exploit.py`
+
+This uses cross-channel scripting (XCS) to inject IronSpider into the victim MicroLogix 1100 & 1400 PLC. 
+
+#### `WAGO_EXPLOIT/`exploit.html`
+
+This uses the CVE chain discussed in the paper (CORS misconfiguration, authentication bypass, and arbitrary file injection) to inject WB malware.
+
+#### `Resurrection/sw.js`
+
+This demonstrates how to bypass limitations of a Service Worker, by waiting for a legitimate fetch request for a JS file and replacing it with `event.respondWith`.
+
+Service Workers do not have access to the DOM structure, localStorage, or synchronous APIs. However, they can mock the response to a legitimate `fetch` request with loading WB malware, which is then loaded onto main page. The loaded WB malware then has access to the full DOM structure, localStorage, and so on.
