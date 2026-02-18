@@ -81,3 +81,47 @@ This uses the CVE chain discussed in the paper (CORS misconfiguration, authentic
 This demonstrates how to bypass limitations of a Service Worker, by waiting for a legitimate fetch request for a JS file and replacing it with `event.respondWith`.
 
 Service Workers do not have access to the DOM structure, localStorage, or synchronous APIs. However, they can mock the response to a legitimate `fetch` request with loading WB malware, which is then loaded onto main page. The loaded WB malware then has access to the full DOM structure, localStorage, and so on.
+
+## Feb 18, 2026 - Day 2
+
+### Environment Setup
+
+- OpenPLC: installed on my Arch Linux environment, at localhost:8080
+    - Specifying the path to find modbus was an issue, resolved by running `export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH`.
+- Node.js: for running a local HTTPS server for Service Worker resurrection
+- mkcert: for providing a locally-trusted HTTPS certificate, allowing Service Worker to be run
+- mitmproxy: for implementing detection mechanism for IronSpider or relevant WB malware
+
+### OpenPLC API Map
+
+#### /login
+
+This is the first landing page. It accepts `openplc` as both username and password for navigating to `/dashboard`.
+![alt text](image.png)
+
+#### /dashboard
+
+- runtime_logs endpoint: this page runs `GET /runtime_logs HTTP/1.1` every second to reload the runtime log.
+![alt text](image-1.png)
+
+#### /programs
+
+- `POST /upload-program HTTP/1.1` endpoint for uploading a new `.st` program to OpenPLC
+- `GET /programs?list_all=1 HTTP/1.1` to list all the uploaded `.st` programs
+![alt text](image-2.png)
+
+#### /monitoring
+
+- While running a program, this page sends `GET /monitor-update?mb_port=502 HTTP/1.1` request every `Refresh Rate` set by the user.
+![alt text](image-3.png)
+
+### Key Observations
+
+On Dashboard and Monitoring pages, OpenPLC repeatedly sends requests to update to the latest state for the system. 
+
+The user can upload `.st` files and compile them, running them on the PLC provided by pressing the`Start PLC` button.
+
+### Water Pump Program
+
+I added Water Pump Program under `E2-openplc-demo/`, and managed to upload it onto OpenPLC. Running it does not show any monitoring variables, so this will be the task for tomorrow.
+
