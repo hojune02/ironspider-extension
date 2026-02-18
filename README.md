@@ -1,4 +1,4 @@
-# IronSpider Replication Study
+# IronSpider Replication & Extension Study
 
 Replication and extension for detection capability of *Compromising Industrial Processes using Web-Based Programmable Logic Controller Malware* (NDSS 2024)
 
