@@ -1,8 +1,8 @@
 PROGRAM water_pump
   VAR
-    water_level AT %IW0 : INT := 50;      (* Input word 0 *)
-    pump_running AT %QX0.0 : BOOL := FALSE; (* Output bit 0.0 *)
-    alarm_active AT %QX0.1 : BOOL := FALSE; (* Output bit 0.1 *)
+    water_level AT %IW0 : INT := 50;      
+    pump_running AT %QX0.0 : BOOL := FALSE; 
+    alarm_active AT %QX0.1 : BOOL := FALSE; 
   END_VAR
   
   VAR
