@@ -126,3 +126,97 @@ The user can upload `.st` files and compile them, running them on the PLC provid
 I added Water Pump Program under `E2-openplc-demo/`, and managed to upload it onto OpenPLC. Running it does not show any monitoring variables, so this will be the task for tomorrow.
 
 ... I managed to fix the bug today! The core problem was inside `webserver/monitoring.py`, where `parse_st` function simply rejected any line of code containing comment characters:`(`, `)`. My original code contained `AT` variables (variables that can be accessed in the monitoring interface) with these comments, making the parser to ignore those declarations completely. Once I removed the comments and the parser correctly identified the variables, I could see them on OpenPLC's `/monitoring` endpoint. 
+
+## Day 3: Feb 19, 2026
+
+### Brief Overview on the WAGO Firmwares
+
+I downloaded the WAGO firmwares that were analysed in the paper's E1 section, and extracted them with `binwalk`. The versions I downloaded are the same as those from the paper: v03.0.39 and v04.02.13. After finding out that the extracted filesystems are `ext3` type, I mounted them on `/mnt/wago-old` and `/mnt/wago-new` respectively, to view web contents and their paths inside the filesystems. 
+
+```bash
+  hojune via  main at …/ironspider-extension/E1-firmware-analysis/firmware-images/extractions/WAGO_FW0750-8xxx_V030039_IX12_r38974.img.extracted/0 via   3.11.7 (.openplc) 
+  # Search for web files
+find /mnt/wago-old -name "*.js" -type f 2>/dev/null | head -20
+find /mnt/wago-old -name "*.php" -type f 2>/dev/null | head -20
+
+# Check common web locations
+ls -la /mnt/wago-old/var/www/
+ls -la /mnt/wago-old/home/
+ls -la /mnt/wago-old/usr/share/
+/mnt/wago-old/var/www/ws/eWS.js
+/mnt/wago-old/var/www/wbm/js/dns_server.js
+/mnt/wago-old/var/www/wbm/js/modem.js
+/mnt/wago-old/var/www/wbm/js/tftp.js
+/mnt/wago-old/var/www/wbm/js/clock.js
+/...
+/mnt/wago-old/var/www/wbm/page_elements/bacnet_general_configuration.inc.php
+/mnt/wago-old/var/www/wbm/page_elements/network_services.inc.php
+/mnt/wago-old/var/www/wbm/page_elements/system_partition.inc.php
+/mnt/wago-old/var/www/wbm/page_elements/firewall_general_configuration.inc.php
+/mnt/wago-old/var/www/wbm/page_elements/service_interface.inc.php
+total 6
+drwxr-xr-x  5 root root 1024 May  8  2019 .
+...
+drwxr-xr-x  2 root root   1024 May  7  2019 locale
+drwxr-xr-x  3 root root   1024 May  7  2019 opkg
+drwxr-xr-x  3 root root   1024 May  7  2019 snmp
+drwxr-xr-x  8 root root   1024 May  7  2019 terminfo
+drwxr-xr-x  2 root root   1024 May  7  2019 udhcpc
+-rw-r--r--  1 root root 502948 May  7  2019 usb.ids
+drwxr-xr-x  2 root root   1024 May  7  2019 zoneinfo
+```
+```bash
+  hojune via  main at …/ironspider-extension/E1-firmware-analysis/firmware-images/extractions/PFC-G2-Linux_sd_V040213_24_r74297.img.extracted/0 via   3.11.7 (.openplc) 
+  # Search for web files
+find /mnt/wago-new -name "*.js" -type f 2>/dev/null | head -20
+find /mnt/wago-new -name "*.php" -type f 2>/dev/null | head -20
+
+# Check common web locations
+ls -la /mnt/wago-new/var/www/
+ls -la /mnt/wago-new/home/
+ls -la /mnt/wago-new/usr/share/
+/mnt/wago-new/var/www/openapi/redoc.standalone.js
+/mnt/wago-new/var/www/ws/eWS.js
+/mnt/wago-new/var/www/wbm/plugins/wbm-statusplcswitch/statusplcswitch.js
+/mnt/wago-new/var/www/wbm/plugins/wbm-profibus/profibus.js
+/mnt/wago-new/var/www/wbm/plugins/wbm-profibus/platform/pfcXXX/parameter/transforms/get-profibus-dp-slave-ssa-user-address.js
+/mnt/wago-new/var/www/wbm/plugins/wbm-user/user.js
+/...
+/mnt/wago-new/var/www/wbm/php/file_transfer/prepare_transfer.php
+/mnt/wago-new/var/www/wbm/php/file_transfer/file_transfer.inc.php
+/mnt/wago-new/var/www/wbm/php/file_transfer/response/response.inc.php
+/mnt/wago-new/var/www/wbm/php/file_transfer/cleanup_transfer.php
+total 20
+drwxr-xr-x  5 root root 4096 Mar 23  2023 .
+drwxr-xr-x 11 root root 4096 Mar 23  2023 ..
+...
+drwxr-xr-x  2 root root   4096 Mar 23  2023 zoneinfo
+```
+### Replication of E1: WAGO 750-8XXX WBM Application Code Base study
+
+After verifying that the firmwares contain web-based contents (`.js`, `.php`), I looked at the paper artifacts on *zenodo.org* to imitate the paper's analysis.
+
+Following the instructions on `README.me` for `WBM_Code_Study`, I managed to replicate the results from the paper. I had to rebuild the Docker image and place it in `WBM_Code_Study/prebuilt/`, since my machine is based on x86_64 architecture:
+
+```bash
+docker build -t artifact ./docker_artifact/
+docker save 166bd4f275c6 > ./prebuilt/docker_artifact.tar
+```
+The result is shown below:
+
+```bash
+  hojune via  main at …/ironspider-extension/ironspider-artifacts/WBM_Code_Study via   3.11.7 (.openplc) 
+  cd prebuilt/
+  hojune via  main at …/ironspider-extension/ironspider-artifacts/WBM_Code_Study/prebuilt via   3.11.7 (.openplc) 
+  python automation.py
+ * Loading Docker Image...
+ * Loading Old FW...
+    > Old firmware contained 13,188 total SLOC (12,868 JS; 320 PHP) and an aggregate cyclomatic complexity score of 4,529 (2,922 JS; 1,607 PHP)
+ * Loading New FW...
+    > New firmware contained 39,007 total SLOC (38,444 JS; 563 PHP) and an aggregate cyclomatic complexity score of 11,974 (9,294 JS; 2,680 PHP)
+    > This data shows that over the past several years, the web application codebase has grown by over 195% and increased in complexity by over 164%.
+ * Removing Docker Image...
+ * Done
+```
+
+
