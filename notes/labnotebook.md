@@ -218,5 +218,23 @@ The result is shown below:
  * Removing Docker Image...
  * Done
 ```
+## Day 4: Feb 20, 2026
 
+Today, I read two research papers that were cited by the IronSpider paper, so that I can gain more background knowledge and deeper understanding in ICS and attacks against PLCs.
+
+### Hey, My Malware Knows Physics! Attacking PLCs with Physical Model Aware Rootkit 
+
+This paper explores a PLC malware called *Harvey*, which sits in the firmware of a PLC to control the physical behaviours of the underlying ICS in the attacker's favour while remaining 'stealthy' and preventing its adverse impact from getting noticed by human operators. 
+
+*Harvey* is effective in that it can remain undetected within an ICS and hence can cause damage on it for a prolonged period of time. However, it requires the attackers to have thorough understanding of the firmware used. The paper mentions reverse-engineering the target firmware. IronSpider addresses this issue by controlling the UI on browser-based HMIs, which does not require attackers to fully comprehend the inner mechanisms of the system.
+
+### Exposed Infrastructures: Discovery, Attacks and Remediation of Insecure ICS Remote Management Devices
+
+This paper describes how Internet-facing remote management devices are exposed to unintended users. This opened up possibilities for attacks against critical ICS such as water gates. 
+
+At the time of the paper, many of the ICSs that operated web-based remote management devices had vulnerabilities such as no authentication and weak passwords for their remote access points. 
+
+Moreover, the paper set up an intentionally vulnerable remote management device in order to analyse how attractive it is for potential attackers. This revealed that there are potential attackers who are willing to explore the endpoints of the device and even conduct attacks against it.
+
+IronSpider sets itself as an example against a typical Internet-facing remote management device, as it injects its code via the access to an ICS on the Internet. It then places itself in the rendering browser to gain access and control to the underlying ICS.
 
