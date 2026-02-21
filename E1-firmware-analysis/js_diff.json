@@ -1,0 +1,1241 @@
+{
+  "meta": {
+    "old_firmware": "WAGO v3.0.39 (WAGO_FW0750-8xxx_V030039_IX12_r38974.img)",
+    "new_firmware": "WAGO v4.02.13 (PFC-G2-Linux_sd_V040213_24_r74297.img)",
+    "old_js_count": 65,
+    "new_js_count": 98,
+    "old_only_count": 58,
+    "new_only_count": 89,
+    "shared_count": 7
+  },
+  "new_only_by_category": {
+    "api_docs": [
+      "openapi/redoc.standalone.js"
+    ],
+    "cloud_remote": [
+      "wbm/plugins/wbm-cloud-connectivity/cloud-connectivity.js",
+      "wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_config_parameters.js",
+      "wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_operation_status.js",
+      "wbm/plugins/wbm-modem-ng/modem-ng.js",
+      "wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/get-provider.js",
+      "wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/set-provider.js",
+      "wbm/plugins/wbm-openvpn-ipsec/openvpn-ipsec.js"
+    ],
+    "container_infra": [
+      "wbm/plugins/wbm-docker/docker.js",
+      "wbm/plugins/wbm-ipk-uploads/ipk-uploads.js",
+      "wbm/plugins/wbm-package-server/package-server.js",
+      "wbm/plugins/wbm-package-server/platform/pfcXXX/parameter/transforms/get-packageserver-system-info.js"
+    ],
+    "core_framework": [
+      "wbm/pfc.js",
+      "wbm/plugins/wbm-boot-mode/boot-mode.js",
+      "wbm/plugins/wbm-create-image/create-image.js",
+      "wbm/plugins/wbm-legal-information/legal-information.js",
+      "wbm/plugins/wbm-massstorage/massstorage.js",
+      "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/device-type.js",
+      "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-active-device-description.js",
+      "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-filesystem-data.js",
+      "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/medium-description.js",
+      "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-assigned-ntp-servers.js",
+      "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-config.js",
+      "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dns-service-config.js",
+      "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-ntp-config.js",
+      "wbm/plugins/wbm-ports/ports.js",
+      "wbm/plugins/wbm-runtime-configuration/runtime-configuration.js",
+      "wbm/plugins/wbm-runtime-services/runtime-services.js",
+      "wbm/plugins/wbm-serial-interface/serial-interface.js",
+      "wbm/plugins/wbm-service-interface/service-interface.js"
+    ],
+    "industrial_protocols": [
+      "wbm/plugins/wbm-bacnet/bacnet.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-keys-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-own-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-rejected-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-trusted-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/get-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-keys-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-own-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-rejected-certs.js",
+      "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-trusted-certs.js",
+      "wbm/plugins/wbm-profibus/platform/pfcXXX/parameter/transforms/get-profibus-dp-slave-ssa-user-address.js",
+      "wbm/plugins/wbm-wda/wda.js"
+    ],
+    "monitoring": [
+      "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-arrays.js",
+      "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-maxfilesize.js",
+      "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/set-pcaplog-maxfilesize.js",
+      "wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/calculate-operating-hours.js",
+      "wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/generate-series-string.js",
+      "wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-possible-runtimes.js",
+      "wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-task-list.js",
+      "wbm/plugins/wbm-runtime-information/runtime-information.js",
+      "wbm/plugins/wbm-statusdate/statusdate.js",
+      "wbm/plugins/wbm-statusled/platform/pfcXXX/parameter/transforms/get-led-config.js",
+      "wbm/plugins/wbm-statusled/statusled.js",
+      "wbm/plugins/wbm-statusplcswitch/statusplcswitch.js"
+    ],
+    "other": [
+      "wbm/plugins/wbm-networking/networking.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-interfaces-configurable.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-switch-extended-config.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-bridge-config.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dip-switch-config.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-all.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-complete.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-get-dynamic.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.spec.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config-current.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-supported-link-modes.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-bridge-config.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-default-gateway.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ethernet-interfaces.js",
+      "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ip-config.js",
+      "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/general-config-values.js",
+      "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_communities.js",
+      "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_users.js",
+      "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v1v2c_trap_receivers.js",
+      "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v3_trap_receivers.js",
+      "wbm/plugins/wbm-snmp/snmp.js"
+    ],
+    "security": [
+      "wbm/plugins/wbm-aide/aide.js",
+      "wbm/plugins/wbm-certificate-uploads/certificate-uploads.js",
+      "wbm/plugins/wbm-certificate-uploads/platform/pfcXXX/parameter/transforms/get-full-status.js",
+      "wbm/plugins/wbm-firewall/firewall.js",
+      "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-ebtables.js",
+      "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-iptables.js",
+      "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-max-connections.js",
+      "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-services.js",
+      "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-name.js",
+      "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-sort-helper.js",
+      "wbm/plugins/wbm-security/security.js",
+      "wbm/plugins/wbm-user/user.js"
+    ]
+  },
+  "new_only_files": [
+    {
+      "rel_path": "openapi/redoc.standalone.js",
+      "basename": "redoc.standalone.js",
+      "category": "api_docs",
+      "api_endpoints_found": [],
+      "snippet_lines": 30
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-cloud-connectivity/cloud-connectivity.js",
+      "basename": "cloud-connectivity.js",
+      "category": "cloud_remote",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_config_parameters.js",
+      "basename": "transform_config_parameters.js",
+      "category": "cloud_remote",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_operation_status.js",
+      "basename": "transform_operation_status.js",
+      "category": "cloud_remote",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-modem-ng/modem-ng.js",
+      "basename": "modem-ng.js",
+      "category": "cloud_remote",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/get-provider.js",
+      "basename": "get-provider.js",
+      "category": "cloud_remote",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/set-provider.js",
+      "basename": "set-provider.js",
+      "category": "cloud_remote",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-openvpn-ipsec/openvpn-ipsec.js",
+      "basename": "openvpn-ipsec.js",
+      "category": "cloud_remote",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-docker/docker.js",
+      "basename": "docker.js",
+      "category": "container_infra",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-ipk-uploads/ipk-uploads.js",
+      "basename": "ipk-uploads.js",
+      "category": "container_infra",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-package-server/package-server.js",
+      "basename": "package-server.js",
+      "category": "container_infra",
+      "api_endpoints_found": [
+        "wbm/firmware_backup_status"
+      ],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-package-server/platform/pfcXXX/parameter/transforms/get-packageserver-system-info.js",
+      "basename": "get-packageserver-system-info.js",
+      "category": "container_infra",
+      "api_endpoints_found": [],
+      "snippet_lines": 30
+    },
+    {
+      "rel_path": "wbm/pfc.js",
+      "basename": "pfc.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 30
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-boot-mode/boot-mode.js",
+      "basename": "boot-mode.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-create-image/create-image.js",
+      "basename": "create-image.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-legal-information/legal-information.js",
+      "basename": "legal-information.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-massstorage/massstorage.js",
+      "basename": "massstorage.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/device-type.js",
+      "basename": "device-type.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-active-device-description.js",
+      "basename": "get-active-device-description.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-filesystem-data.js",
+      "basename": "get-filesystem-data.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/medium-description.js",
+      "basename": "medium-description.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-assigned-ntp-servers.js",
+      "basename": "get-dhcp-assigned-ntp-servers.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-config.js",
+      "basename": "get-dhcp-config.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dns-service-config.js",
+      "basename": "get-dns-service-config.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-ntp-config.js",
+      "basename": "get-ntp-config.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-ports/ports.js",
+      "basename": "ports.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-runtime-configuration/runtime-configuration.js",
+      "basename": "runtime-configuration.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-runtime-services/runtime-services.js",
+      "basename": "runtime-services.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-serial-interface/serial-interface.js",
+      "basename": "serial-interface.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-service-interface/service-interface.js",
+      "basename": "service-interface.js",
+      "category": "core_framework",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-bacnet/bacnet.js",
+      "basename": "bacnet.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-keys-certs.js",
+      "basename": "client-keys-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-own-certs.js",
+      "basename": "client-own-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-rejected-certs.js",
+      "basename": "client-rejected-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-trusted-certs.js",
+      "basename": "client-trusted-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/get-certs.js",
+      "basename": "get-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-keys-certs.js",
+      "basename": "server-keys-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-own-certs.js",
+      "basename": "server-own-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-rejected-certs.js",
+      "basename": "server-rejected-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-trusted-certs.js",
+      "basename": "server-trusted-certs.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-profibus/platform/pfcXXX/parameter/transforms/get-profibus-dp-slave-ssa-user-address.js",
+      "basename": "get-profibus-dp-slave-ssa-user-address.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 18
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-wda/wda.js",
+      "basename": "wda.js",
+      "category": "industrial_protocols",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-arrays.js",
+      "basename": "get-pcaplog-arrays.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-maxfilesize.js",
+      "basename": "get-pcaplog-maxfilesize.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/set-pcaplog-maxfilesize.js",
+      "basename": "set-pcaplog-maxfilesize.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/calculate-operating-hours.js",
+      "basename": "calculate-operating-hours.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 21
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/generate-series-string.js",
+      "basename": "generate-series-string.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 21
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-possible-runtimes.js",
+      "basename": "get-possible-runtimes.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-task-list.js",
+      "basename": "get-task-list.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-runtime-information/runtime-information.js",
+      "basename": "runtime-information.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-statusdate/statusdate.js",
+      "basename": "statusdate.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-statusled/platform/pfcXXX/parameter/transforms/get-led-config.js",
+      "basename": "get-led-config.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-statusled/statusled.js",
+      "basename": "statusled.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-statusplcswitch/statusplcswitch.js",
+      "basename": "statusplcswitch.js",
+      "category": "monitoring",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/networking.js",
+      "basename": "networking.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-interfaces-configurable.js",
+      "basename": "ethernet-interfaces-configurable.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-switch-extended-config.js",
+      "basename": "ethernet-switch-extended-config.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-bridge-config.js",
+      "basename": "get-bridge-config.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dip-switch-config.js",
+      "basename": "get-dip-switch-config.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-all.js",
+      "basename": "get-dns-server-all.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-complete.js",
+      "basename": "get-dns-server-complete.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-get-dynamic.js",
+      "basename": "get-dns-server-get-dynamic.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.js",
+      "basename": "get-ethernet-interfaces.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.spec.js",
+      "basename": "get-ethernet-interfaces.spec.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config-current.js",
+      "basename": "get-ip-config-current.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config.js",
+      "basename": "get-ip-config.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-supported-link-modes.js",
+      "basename": "get-supported-link-modes.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-bridge-config.js",
+      "basename": "set-bridge-config.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-default-gateway.js",
+      "basename": "set-default-gateway.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ethernet-interfaces.js",
+      "basename": "set-ethernet-interfaces.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ip-config.js",
+      "basename": "set-ip-config.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/general-config-values.js",
+      "basename": "general-config-values.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_communities.js",
+      "basename": "get_communities.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_users.js",
+      "basename": "get_users.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v1v2c_trap_receivers.js",
+      "basename": "get_v1v2c_trap_receivers.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v3_trap_receivers.js",
+      "basename": "get_v3_trap_receivers.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-snmp/snmp.js",
+      "basename": "snmp.js",
+      "category": "other",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-aide/aide.js",
+      "basename": "aide.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-certificate-uploads/certificate-uploads.js",
+      "basename": "certificate-uploads.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-certificate-uploads/platform/pfcXXX/parameter/transforms/get-full-status.js",
+      "basename": "get-full-status.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-firewall/firewall.js",
+      "basename": "firewall.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-ebtables.js",
+      "basename": "firewall-ebtables.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-iptables.js",
+      "basename": "firewall-iptables.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-max-connections.js",
+      "basename": "firewall-max-connections.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-services.js",
+      "basename": "firewall-services.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-name.js",
+      "basename": "interface-name.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-sort-helper.js",
+      "basename": "interface-sort-helper.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 17
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-security/security.js",
+      "basename": "security.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    },
+    {
+      "rel_path": "wbm/plugins/wbm-user/user.js",
+      "basename": "user.js",
+      "category": "security",
+      "api_endpoints_found": [],
+      "snippet_lines": 19
+    }
+  ],
+  "old_only_files": [
+    {
+      "rel_path": "wbm/js/bacnet_diagnostic.js",
+      "basename": "bacnet_diagnostic.js",
+      "category": "industrial_protocols"
+    },
+    {
+      "rel_path": "wbm/js/bacnet_general_configuration.js",
+      "basename": "bacnet_general_configuration.js",
+      "category": "industrial_protocols"
+    },
+    {
+      "rel_path": "wbm/js/bacnet_storage_location.js",
+      "basename": "bacnet_storage_location.js",
+      "category": "industrial_protocols"
+    },
+    {
+      "rel_path": "wbm/js/cloud_connectivity.js",
+      "basename": "cloud_connectivity.js",
+      "category": "cloud_remote"
+    },
+    {
+      "rel_path": "wbm/js/codesys_ports.js",
+      "basename": "codesys_ports.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/create_image.js",
+      "basename": "create_image.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/default_gateway.js",
+      "basename": "default_gateway.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/device_communication.js",
+      "basename": "device_communication.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/device_params.js",
+      "basename": "device_params.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/dhcpd.js",
+      "basename": "dhcpd.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/dns_server.js",
+      "basename": "dns_server.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/dns_service.js",
+      "basename": "dns_service.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/ethernet.js",
+      "basename": "ethernet.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/file-iterator.js",
+      "basename": "file-iterator.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/file-transfer.js",
+      "basename": "file-transfer.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/firewall_general_configuration.js",
+      "basename": "firewall_general_configuration.js",
+      "category": "security"
+    },
+    {
+      "rel_path": "wbm/js/firewall_mac_address_filter.js",
+      "basename": "firewall_mac_address_filter.js",
+      "category": "security"
+    },
+    {
+      "rel_path": "wbm/js/firewall_service_configuration.js",
+      "basename": "firewall_service_configuration.js",
+      "category": "security"
+    },
+    {
+      "rel_path": "wbm/js/firewall_user_filter.js",
+      "basename": "firewall_user_filter.js",
+      "category": "security"
+    },
+    {
+      "rel_path": "wbm/js/firmware_backup.js",
+      "basename": "firmware_backup.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/firmware_restore.js",
+      "basename": "firmware_restore.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/general_definitions.js",
+      "basename": "general_definitions.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/head_station_info.js",
+      "basename": "head_station_info.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/integrity.js",
+      "basename": "integrity.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/interface_config.js",
+      "basename": "interface_config.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/interfaces.js",
+      "basename": "interfaces.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/iocheck_port.js",
+      "basename": "iocheck_port.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/iplib.js",
+      "basename": "iplib.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/jquery-1.12.4.min.js",
+      "basename": "jquery-1.12.4.min.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/jquery.xml2json.js",
+      "basename": "jquery.xml2json.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/mass_storage.js",
+      "basename": "mass_storage.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/modbus_services.js",
+      "basename": "modbus_services.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/network_services.js",
+      "basename": "network_services.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/ntp.js",
+      "basename": "ntp.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/page_buildup.js",
+      "basename": "page_buildup.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/routing.js",
+      "basename": "routing.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/rs232.js",
+      "basename": "rs232.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/rts_configuration.js",
+      "basename": "rts_configuration.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/rts_info.js",
+      "basename": "rts_info.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/service_interface.js",
+      "basename": "service_interface.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/snmp_general.js",
+      "basename": "snmp_general.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/snmp_v1_v2c.js",
+      "basename": "snmp_v1_v2c.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/snmp_v3.js",
+      "basename": "snmp_v3.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/software_uploads.js",
+      "basename": "software_uploads.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/ssh.js",
+      "basename": "ssh.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/start_reboot.js",
+      "basename": "start_reboot.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/state_area.js",
+      "basename": "state_area.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/system_partition.js",
+      "basename": "system_partition.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/tcpip_common_configuration.js",
+      "basename": "tcpip_common_configuration.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/tftp.js",
+      "basename": "tftp.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/tls.js",
+      "basename": "tls.js",
+      "category": "security"
+    },
+    {
+      "rel_path": "wbm/js/tooltip.js",
+      "basename": "tooltip.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/upload.js",
+      "basename": "upload.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/user_management.js",
+      "basename": "user_management.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/users.js",
+      "basename": "users.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/vpn.js",
+      "basename": "vpn.js",
+      "category": "other"
+    },
+    {
+      "rel_path": "wbm/js/webvisu.js",
+      "basename": "webvisu.js",
+      "category": "webvisu"
+    },
+    {
+      "rel_path": "wbm/js/xhr.js",
+      "basename": "xhr.js",
+      "category": "other"
+    }
+  ],
+  "shared_files": [
+    {
+      "old_rel_path": "wbm/js/clock.js",
+      "new_rel_path": "wbm/plugins/wbm-clock/clock.js",
+      "stem": "clock"
+    },
+    {
+      "old_rel_path": "wbm/js/diagnostic.js",
+      "new_rel_path": "wbm/plugins/wbm-diagnostic/diagnostic.js",
+      "stem": "diagnostic"
+    },
+    {
+      "old_rel_path": "ws/eWS.js",
+      "new_rel_path": "ws/eWS.js",
+      "stem": "ews"
+    },
+    {
+      "old_rel_path": "wbm/js/information.js",
+      "new_rel_path": "wbm/plugins/wbm-information/information.js",
+      "stem": "information"
+    },
+    {
+      "old_rel_path": "wbm/js/modem.js",
+      "new_rel_path": "wbm/plugins/wbm-modem/modem.js",
+      "stem": "modem"
+    },
+    {
+      "old_rel_path": "wbm/js/opcua.js",
+      "new_rel_path": "wbm/plugins/wbm-opcua/opcua.js",
+      "stem": "opcua"
+    },
+    {
+      "old_rel_path": "wbm/js/profibus.js",
+      "new_rel_path": "wbm/plugins/wbm-profibus/profibus.js",
+      "stem": "profibus"
+    }
+  ],
+  "all_old_files": [
+    "wbm/js/bacnet_diagnostic.js",
+    "wbm/js/bacnet_general_configuration.js",
+    "wbm/js/bacnet_storage_location.js",
+    "wbm/js/clock.js",
+    "wbm/js/cloud_connectivity.js",
+    "wbm/js/codesys_ports.js",
+    "wbm/js/create_image.js",
+    "wbm/js/default_gateway.js",
+    "wbm/js/device_communication.js",
+    "wbm/js/device_params.js",
+    "wbm/js/dhcpd.js",
+    "wbm/js/diagnostic.js",
+    "wbm/js/dns_server.js",
+    "wbm/js/dns_service.js",
+    "wbm/js/ethernet.js",
+    "wbm/js/file-iterator.js",
+    "wbm/js/file-transfer.js",
+    "wbm/js/firewall_general_configuration.js",
+    "wbm/js/firewall_mac_address_filter.js",
+    "wbm/js/firewall_service_configuration.js",
+    "wbm/js/firewall_user_filter.js",
+    "wbm/js/firmware_backup.js",
+    "wbm/js/firmware_restore.js",
+    "wbm/js/general_definitions.js",
+    "wbm/js/head_station_info.js",
+    "wbm/js/information.js",
+    "wbm/js/integrity.js",
+    "wbm/js/interface_config.js",
+    "wbm/js/interfaces.js",
+    "wbm/js/iocheck_port.js",
+    "wbm/js/iplib.js",
+    "wbm/js/jquery-1.12.4.min.js",
+    "wbm/js/jquery.xml2json.js",
+    "wbm/js/mass_storage.js",
+    "wbm/js/modbus_services.js",
+    "wbm/js/modem.js",
+    "wbm/js/network_services.js",
+    "wbm/js/ntp.js",
+    "wbm/js/opcua.js",
+    "wbm/js/page_buildup.js",
+    "wbm/js/profibus.js",
+    "wbm/js/routing.js",
+    "wbm/js/rs232.js",
+    "wbm/js/rts_configuration.js",
+    "wbm/js/rts_info.js",
+    "wbm/js/service_interface.js",
+    "wbm/js/snmp_general.js",
+    "wbm/js/snmp_v1_v2c.js",
+    "wbm/js/snmp_v3.js",
+    "wbm/js/software_uploads.js",
+    "wbm/js/ssh.js",
+    "wbm/js/start_reboot.js",
+    "wbm/js/state_area.js",
+    "wbm/js/system_partition.js",
+    "wbm/js/tcpip_common_configuration.js",
+    "wbm/js/tftp.js",
+    "wbm/js/tls.js",
+    "wbm/js/tooltip.js",
+    "wbm/js/upload.js",
+    "wbm/js/user_management.js",
+    "wbm/js/users.js",
+    "wbm/js/vpn.js",
+    "wbm/js/webvisu.js",
+    "wbm/js/xhr.js",
+    "ws/eWS.js"
+  ],
+  "all_new_files": [
+    "openapi/redoc.standalone.js",
+    "wbm/pfc.js",
+    "wbm/plugins/wbm-aide/aide.js",
+    "wbm/plugins/wbm-bacnet/bacnet.js",
+    "wbm/plugins/wbm-boot-mode/boot-mode.js",
+    "wbm/plugins/wbm-certificate-uploads/certificate-uploads.js",
+    "wbm/plugins/wbm-certificate-uploads/platform/pfcXXX/parameter/transforms/get-full-status.js",
+    "wbm/plugins/wbm-clock/clock.js",
+    "wbm/plugins/wbm-cloud-connectivity/cloud-connectivity.js",
+    "wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_config_parameters.js",
+    "wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_operation_status.js",
+    "wbm/plugins/wbm-create-image/create-image.js",
+    "wbm/plugins/wbm-create-image/platform/pfcXXX/parameter/transforms/get-filesystem-data.js",
+    "wbm/plugins/wbm-diagnostic/diagnostic.js",
+    "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-arrays.js",
+    "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-maxfilesize.js",
+    "wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/set-pcaplog-maxfilesize.js",
+    "wbm/plugins/wbm-docker/docker.js",
+    "wbm/plugins/wbm-firewall/firewall.js",
+    "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-ebtables.js",
+    "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-iptables.js",
+    "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-max-connections.js",
+    "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-services.js",
+    "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-name.js",
+    "wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-sort-helper.js",
+    "wbm/plugins/wbm-information/information.js",
+    "wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/calculate-operating-hours.js",
+    "wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/generate-series-string.js",
+    "wbm/plugins/wbm-ipk-uploads/ipk-uploads.js",
+    "wbm/plugins/wbm-legal-information/legal-information.js",
+    "wbm/plugins/wbm-massstorage/massstorage.js",
+    "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/device-type.js",
+    "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-active-device-description.js",
+    "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-filesystem-data.js",
+    "wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/medium-description.js",
+    "wbm/plugins/wbm-modem-ng/modem-ng.js",
+    "wbm/plugins/wbm-modem/modem.js",
+    "wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/get-provider.js",
+    "wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/set-provider.js",
+    "wbm/plugins/wbm-networking/networking.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-interfaces-configurable.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-switch-extended-config.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-bridge-config.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dip-switch-config.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-all.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-complete.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-get-dynamic.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.spec.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config-current.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-supported-link-modes.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-bridge-config.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-default-gateway.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ethernet-interfaces.js",
+    "wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ip-config.js",
+    "wbm/plugins/wbm-opcua/opcua.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-keys-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-own-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-rejected-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-trusted-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/get-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-keys-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-own-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-rejected-certs.js",
+    "wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-trusted-certs.js",
+    "wbm/plugins/wbm-openvpn-ipsec/openvpn-ipsec.js",
+    "wbm/plugins/wbm-package-server/package-server.js",
+    "wbm/plugins/wbm-package-server/platform/pfcXXX/parameter/transforms/get-packageserver-system-info.js",
+    "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-assigned-ntp-servers.js",
+    "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-config.js",
+    "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dns-service-config.js",
+    "wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-ntp-config.js",
+    "wbm/plugins/wbm-ports/ports.js",
+    "wbm/plugins/wbm-profibus/platform/pfcXXX/parameter/transforms/get-profibus-dp-slave-ssa-user-address.js",
+    "wbm/plugins/wbm-profibus/profibus.js",
+    "wbm/plugins/wbm-runtime-configuration/platform/pfcXXX/parameter/transforms/get-possible-runtimes.js",
+    "wbm/plugins/wbm-runtime-configuration/runtime-configuration.js",
+    "wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-possible-runtimes.js",
+    "wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-task-list.js",
+    "wbm/plugins/wbm-runtime-information/runtime-information.js",
+    "wbm/plugins/wbm-runtime-services/runtime-services.js",
+    "wbm/plugins/wbm-security/security.js",
+    "wbm/plugins/wbm-serial-interface/serial-interface.js",
+    "wbm/plugins/wbm-service-interface/service-interface.js",
+    "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/general-config-values.js",
+    "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_communities.js",
+    "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_users.js",
+    "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v1v2c_trap_receivers.js",
+    "wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v3_trap_receivers.js",
+    "wbm/plugins/wbm-snmp/snmp.js",
+    "wbm/plugins/wbm-statusdate/statusdate.js",
+    "wbm/plugins/wbm-statusled/platform/pfcXXX/parameter/transforms/get-led-config.js",
+    "wbm/plugins/wbm-statusled/statusled.js",
+    "wbm/plugins/wbm-statusplcswitch/statusplcswitch.js",
+    "wbm/plugins/wbm-user/user.js",
+    "wbm/plugins/wbm-wda/wda.js",
+    "ws/eWS.js"
+  ]
+}

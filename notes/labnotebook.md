@@ -134,8 +134,7 @@ I added Water Pump Program under `E2-openplc-demo/`, and managed to upload it on
 I downloaded the WAGO firmwares that were analysed in the paper's E1 section, and extracted them with `binwalk`. The versions I downloaded are the same as those from the paper: v03.0.39 and v04.02.13. After finding out that the extracted filesystems are `ext3` type, I mounted them on `/mnt/wago-old` and `/mnt/wago-new` respectively, to view web contents and their paths inside the filesystems. 
 
 ```bash
-  hojune via  main at …/ironspider-extension/E1-firmware-analysis/firmware-images/extractions/WAGO_FW0750-8xxx_V030039_IX12_r38974.img.extracted/0 via   3.11.7 (.openplc) 
-  # Search for web files
+# Search for web files
 find /mnt/wago-old -name "*.js" -type f 2>/dev/null | head -20
 find /mnt/wago-old -name "*.php" -type f 2>/dev/null | head -20
 
@@ -143,6 +142,8 @@ find /mnt/wago-old -name "*.php" -type f 2>/dev/null | head -20
 ls -la /mnt/wago-old/var/www/
 ls -la /mnt/wago-old/home/
 ls -la /mnt/wago-old/usr/share/
+```
+```bash
 /mnt/wago-old/var/www/ws/eWS.js
 /mnt/wago-old/var/www/wbm/js/dns_server.js
 /mnt/wago-old/var/www/wbm/js/modem.js
@@ -166,8 +167,7 @@ drwxr-xr-x  2 root root   1024 May  7  2019 udhcpc
 drwxr-xr-x  2 root root   1024 May  7  2019 zoneinfo
 ```
 ```bash
-  hojune via  main at …/ironspider-extension/E1-firmware-analysis/firmware-images/extractions/PFC-G2-Linux_sd_V040213_24_r74297.img.extracted/0 via   3.11.7 (.openplc) 
-  # Search for web files
+# Search for web files
 find /mnt/wago-new -name "*.js" -type f 2>/dev/null | head -20
 find /mnt/wago-new -name "*.php" -type f 2>/dev/null | head -20
 
@@ -175,6 +175,8 @@ find /mnt/wago-new -name "*.php" -type f 2>/dev/null | head -20
 ls -la /mnt/wago-new/var/www/
 ls -la /mnt/wago-new/home/
 ls -la /mnt/wago-new/usr/share/
+```
+```bash
 /mnt/wago-new/var/www/openapi/redoc.standalone.js
 /mnt/wago-new/var/www/ws/eWS.js
 /mnt/wago-new/var/www/wbm/plugins/wbm-statusplcswitch/statusplcswitch.js
@@ -205,10 +207,6 @@ docker save 166bd4f275c6 > ./prebuilt/docker_artifact.tar
 The result is shown below:
 
 ```bash
-  hojune via  main at …/ironspider-extension/ironspider-artifacts/WBM_Code_Study via   3.11.7 (.openplc) 
-  cd prebuilt/
-  hojune via  main at …/ironspider-extension/ironspider-artifacts/WBM_Code_Study/prebuilt via   3.11.7 (.openplc) 
-  python automation.py
  * Loading Docker Image...
  * Loading Old FW...
     > Old firmware contained 13,188 total SLOC (12,868 JS; 320 PHP) and an aggregate cyclomatic complexity score of 4,529 (2,922 JS; 1,607 PHP)
@@ -238,3 +236,57 @@ Moreover, the paper set up an intentionally vulnerable remote management device 
 
 IronSpider sets itself as an example against a typical Internet-facing remote management device, as it injects its code via the access to an ICS on the Internet. It then places itself in the rendering browser to gain access and control to the underlying ICS.
 
+## Day 5: Feb 21, 2026
+
+### SLOC & Complexity Analysis on 2 intermediate firmwares
+
+To extend the paper's analysis for E1, I decided to run `WBM_Code_Study/prebuilt/automation.py` against 2 intermediate firmwares betwen v3.0.39 and v4.02.13. This aims at building a more extensive timeline of growth in web application codebase in these firmwares.
+
+I chose the following intermediate firmwares for analysis:
+- v3.01.07 (Jul 2019)
+- v3.09.04 (Mar 2022)
+
+I created a new automation program (`automation_ext.py`) in Python, using the original `automation.py` as the template. This file can be found in `E1-firmware-analysis/automation_ext.py`.
+
+The result is shown below:
+```bash
+ * Loading Docker Image...
+ * Loading v3.1.7..
+    > v3.1.7 firmware contained 13,472 total SLOC (13,150 JS; 322 PHP) and an aggregate cyclomatic complexity score of 4,574 (2,964 JS; 1,610 PHP)
+ * Loading v3.09.04...
+    > v3.09.04 contained 36,544 total SLOC (35,994 JS; 550 PHP) and an aggregate cyclomatic complexity score of 11,379 (8,764 JS; 2,615 PHP)
+    > This data shows that from v3.1.7 to v3.09.04, the web application codebase has grown by over 171% and increased in complexity by over 148%.
+ * Removing Docker Image...
+ * Done
+```
+The result confirmed that there had been a consistent increase in web-related contents in the firmwares over the given timeframe (from v3.0.39 to v4.02.13). It shows that the growth of web application codebase had taken place incrementally, and was not a sudden 'jump'. 
+
+For the upgrade between v3.0.39 and v3.1.7, the total SLOC increased from 13,188(12,868 JS, 320 PHP) to 13,472 total SLOC(13,150 JS, 322 PHP). The aggregate cyclomatic complexity score also increased from 4,529 to 4,574. In addition, the upgrade between v3.09.04 and v4.02.13 showed an increase in total SLOC from 36,544(35,994 JS, 550 PHP) to 39,007 total SLOC(38,444 JS, 563 PHP), with the cyclomatic complexity score also increasing from 11,379 to 11,974.
+
+## Noteworthy changes in web-related content during firmware upgrades
+
+I strived to extend the paper's work further by moving from a quantitative analysis (SLOC, complexity) to a qualitative one. The question is: *what kind of* functionality was added between v3.0.39 and v4.02.13?, I looked for any noteworthy change in JS files between the v3.0.39 and v4.02.13 firmwares, that could have increased the area of attack surface for web applications codebase.
+
+### JS File Diff — Qualitative Functionality Analysis
+
+**Method**: Wrote `E1-firmware-analysis/js_diff.py` to enumerate all `.js` files from both mounted firmware roots (`/mnt/wago-old` for v3.0.39, `/mnt/wago-new` for v4.02.13), compute stem-level diff (accounting for the flat→plugin architecture change), categorize new files by functional domain, and extract API endpoint strings from new plugin files.
+
+**Output files**:
+- `E1-firmware-analysis/js_diff.json` — structured diff with categories and snippets
+- [`E1-firmware-analysis/js_diff_summary.txt`](../E1-firmware-analysis/js_diff_summary.txt) — human-readable summary
+- `E1-firmware-analysis/js_diff_report.md` — a qualitative analysis
+
+**Key findings**:
+
+| Category | New Files | Notable Additions |
+|---|---|---|
+| Core Framework | 18 | `pfc.js` plugin loader replaces jQuery `page_buildup.js` |
+| Security/Auth | 12 | `wbm-aide` (AIDE IDS), `wbm-firewall` (iptables+ebtables), `wbm-certificate-uploads` |
+| Industrial Protocols | 12 | OPC UA PKI (8 cert transforms), WDA unauthenticated scan toggle |
+| Monitoring | 12 | Pcap logging (`pcaplog.maxfilesize`), runtime task list, LED/switch status |
+| Cloud/Remote | 7 | `wbm-cloud-connectivity` (Azure/AWS/IBM/SAP/MQTT), `wbm-openvpn-ipsec`, `wbm-modem-ng` |
+| Container/Infra | 4 | `wbm-docker`, `wbm-ipk-uploads`, `wbm-package-server` |
+| API Docs | 1 | `openapi/redoc.standalone.js` — self-describing REST API on-device |
+
+Every new "security" feature (AIDE, firewall, certificate management) is managed through the same WBM web interface that IronSpider's CVE chain can fully compromise, potentially causing new defensive capabilities to become attacker-controllable tools. Meanwhile, Docker on PLCs and persistent MQTT cloud channels represent qualitatively new ICS attack surface, which can only be found in v4.02.13.
+ 

@@ -1,0 +1,207 @@
+======================================================================
+WAGO Firmware JS Diff: v3.0.39 → v4.02.13
+Qualitative Analysis — JavaScript File Diff
+======================================================================
+
+OVERVIEW
+  Old firmware JS files :   65
+  New firmware JS files :   98
+  Removed (old-only)    :   58
+  Added   (new-only)    :   89
+  Carried over (shared) :    7
+
+NEW FILES BY FUNCTIONAL CATEGORY
+----------------------------------------
+
+  [OTHER] (23 files)
+    + wbm/plugins/wbm-networking/networking.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-interfaces-configurable.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/ethernet-switch-extended-config.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-bridge-config.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dip-switch-config.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-all.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-complete.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-dns-server-get-dynamic.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ethernet-interfaces.spec.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config-current.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-ip-config.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/get-supported-link-modes.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-bridge-config.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-default-gateway.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ethernet-interfaces.js
+    + wbm/plugins/wbm-networking/platform/pfcXXX/parameter/transforms/set-ip-config.js
+    + wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/general-config-values.js
+    + wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_communities.js
+    + wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_users.js
+    + wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v1v2c_trap_receivers.js
+    + wbm/plugins/wbm-snmp/platform/pfcXXX/parameter/transforms/get_v3_trap_receivers.js
+    + wbm/plugins/wbm-snmp/snmp.js
+
+  [CORE_FRAMEWORK] (18 files)
+    + wbm/pfc.js
+    + wbm/plugins/wbm-boot-mode/boot-mode.js
+    + wbm/plugins/wbm-create-image/create-image.js
+    + wbm/plugins/wbm-legal-information/legal-information.js
+    + wbm/plugins/wbm-massstorage/massstorage.js
+    + wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/device-type.js
+    + wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-active-device-description.js
+    + wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/get-filesystem-data.js
+    + wbm/plugins/wbm-massstorage/platform/pfcXXX/parameter/transforms/medium-description.js
+    + wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-assigned-ntp-servers.js
+    + wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dhcp-config.js
+    + wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-dns-service-config.js
+    + wbm/plugins/wbm-ports/platform/pfcXXX/parameter/transforms/get-ntp-config.js
+    + wbm/plugins/wbm-ports/ports.js
+    + wbm/plugins/wbm-runtime-configuration/runtime-configuration.js
+    + wbm/plugins/wbm-runtime-services/runtime-services.js
+    + wbm/plugins/wbm-serial-interface/serial-interface.js
+    + wbm/plugins/wbm-service-interface/service-interface.js
+
+  [SECURITY] (12 files)
+    + wbm/plugins/wbm-aide/aide.js
+    + wbm/plugins/wbm-certificate-uploads/certificate-uploads.js
+    + wbm/plugins/wbm-certificate-uploads/platform/pfcXXX/parameter/transforms/get-full-status.js
+    + wbm/plugins/wbm-firewall/firewall.js
+    + wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-ebtables.js
+    + wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-iptables.js
+    + wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-max-connections.js
+    + wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/firewall-services.js
+    + wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-name.js
+    + wbm/plugins/wbm-firewall/platform/pfcXXX/parameter/transforms/interface-sort-helper.js
+    + wbm/plugins/wbm-security/security.js
+    + wbm/plugins/wbm-user/user.js
+
+  [INDUSTRIAL_PROTOCOLS] (12 files)
+    + wbm/plugins/wbm-bacnet/bacnet.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-keys-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-own-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-rejected-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/client-trusted-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/get-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-keys-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-own-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-rejected-certs.js
+    + wbm/plugins/wbm-opcua/platform/pfcXXX/parameter/transforms/server-trusted-certs.js
+    + wbm/plugins/wbm-profibus/platform/pfcXXX/parameter/transforms/get-profibus-dp-slave-ssa-user-address.js
+    + wbm/plugins/wbm-wda/wda.js
+
+  [MONITORING] (12 files)
+    + wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-arrays.js
+    + wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/get-pcaplog-maxfilesize.js
+    + wbm/plugins/wbm-diagnostic/platform/pfcXXX/parameter/transforms/set-pcaplog-maxfilesize.js
+    + wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/calculate-operating-hours.js
+    + wbm/plugins/wbm-information/platform/pfcXXX/parameter/transforms/generate-series-string.js
+    + wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-possible-runtimes.js
+    + wbm/plugins/wbm-runtime-information/platform/pfcXXX/parameter/transforms/get-task-list.js
+    + wbm/plugins/wbm-runtime-information/runtime-information.js
+    + wbm/plugins/wbm-statusdate/statusdate.js
+    + wbm/plugins/wbm-statusled/platform/pfcXXX/parameter/transforms/get-led-config.js
+    + wbm/plugins/wbm-statusled/statusled.js
+    + wbm/plugins/wbm-statusplcswitch/statusplcswitch.js
+
+  [CLOUD_REMOTE] (7 files)
+    + wbm/plugins/wbm-cloud-connectivity/cloud-connectivity.js
+    + wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_config_parameters.js
+    + wbm/plugins/wbm-cloud-connectivity/platform/pfcXXX/parameter/transforms/transform_operation_status.js
+    + wbm/plugins/wbm-modem-ng/modem-ng.js
+    + wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/get-provider.js
+    + wbm/plugins/wbm-modem/platform/pfcXXX/parameter/transforms/set-provider.js
+    + wbm/plugins/wbm-openvpn-ipsec/openvpn-ipsec.js
+
+  [CONTAINER_INFRA] (4 files)
+    + wbm/plugins/wbm-docker/docker.js
+    + wbm/plugins/wbm-ipk-uploads/ipk-uploads.js
+    + wbm/plugins/wbm-package-server/package-server.js
+    + wbm/plugins/wbm-package-server/platform/pfcXXX/parameter/transforms/get-packageserver-system-info.js
+
+  [API_DOCS] (1 files)
+    + openapi/redoc.standalone.js
+
+FILES REMOVED (OLD-ONLY)
+----------------------------------------
+  - wbm/js/bacnet_diagnostic.js
+  - wbm/js/bacnet_general_configuration.js
+  - wbm/js/bacnet_storage_location.js
+  - wbm/js/cloud_connectivity.js
+  - wbm/js/codesys_ports.js
+  - wbm/js/create_image.js
+  - wbm/js/default_gateway.js
+  - wbm/js/device_communication.js
+  - wbm/js/device_params.js
+  - wbm/js/dhcpd.js
+  - wbm/js/dns_server.js
+  - wbm/js/dns_service.js
+  - wbm/js/ethernet.js
+  - wbm/js/file-iterator.js
+  - wbm/js/file-transfer.js
+  - wbm/js/firewall_general_configuration.js
+  - wbm/js/firewall_mac_address_filter.js
+  - wbm/js/firewall_service_configuration.js
+  - wbm/js/firewall_user_filter.js
+  - wbm/js/firmware_backup.js
+  - wbm/js/firmware_restore.js
+  - wbm/js/general_definitions.js
+  - wbm/js/head_station_info.js
+  - wbm/js/integrity.js
+  - wbm/js/interface_config.js
+  - wbm/js/interfaces.js
+  - wbm/js/iocheck_port.js
+  - wbm/js/iplib.js
+  - wbm/js/jquery-1.12.4.min.js
+  - wbm/js/jquery.xml2json.js
+  - wbm/js/mass_storage.js
+  - wbm/js/modbus_services.js
+  - wbm/js/network_services.js
+  - wbm/js/ntp.js
+  - wbm/js/page_buildup.js
+  - wbm/js/routing.js
+  - wbm/js/rs232.js
+  - wbm/js/rts_configuration.js
+  - wbm/js/rts_info.js
+  - wbm/js/service_interface.js
+  - wbm/js/snmp_general.js
+  - wbm/js/snmp_v1_v2c.js
+  - wbm/js/snmp_v3.js
+  - wbm/js/software_uploads.js
+  - wbm/js/ssh.js
+  - wbm/js/start_reboot.js
+  - wbm/js/state_area.js
+  - wbm/js/system_partition.js
+  - wbm/js/tcpip_common_configuration.js
+  - wbm/js/tftp.js
+  - wbm/js/tls.js
+  - wbm/js/tooltip.js
+  - wbm/js/upload.js
+  - wbm/js/user_management.js
+  - wbm/js/users.js
+  - wbm/js/vpn.js
+  - wbm/js/webvisu.js
+  - wbm/js/xhr.js
+
+SHARED FILES (CARRIED OVER, POSSIBLY RELOCATED)
+----------------------------------------
+  = clock [RELOCATED]
+      old: wbm/js/clock.js
+      new: wbm/plugins/wbm-clock/clock.js
+  = diagnostic [RELOCATED]
+      old: wbm/js/diagnostic.js
+      new: wbm/plugins/wbm-diagnostic/diagnostic.js
+  = ews
+  = information [RELOCATED]
+      old: wbm/js/information.js
+      new: wbm/plugins/wbm-information/information.js
+  = modem [RELOCATED]
+      old: wbm/js/modem.js
+      new: wbm/plugins/wbm-modem/modem.js
+  = opcua [RELOCATED]
+      old: wbm/js/opcua.js
+      new: wbm/plugins/wbm-opcua/opcua.js
+  = profibus [RELOCATED]
+      old: wbm/js/profibus.js
+      new: wbm/plugins/wbm-profibus/profibus.js
+
+API ENDPOINTS FOUND IN NEW FILES
+----------------------------------------
+  wbm/plugins/wbm-package-server/package-server.js:
+    -> /wbm/firmware_backup_status
