@@ -12,9 +12,8 @@ The list below contains an overview on my replication and extension study. The b
 
 - E1: WAGO firmware growth analysis (**extended timeline & qualitative analysis**)
     - **Conducted SLOC & complexity analyses on two intermediate WAGO firmwares (v3.01.07 and v3.09.04) and qualitative analysis on key JS files added to v4.09.13 ([Day 5](notes/labnotebook.md/#day-5-feb-21-2026))**
-- E2: Service Worker resurrection testbed
-- E3: Conceptual IronSpider demonstration on OpenPLC
-- E4: **Behavioral anomaly detection extension**
+- E2, 3: Conceptual IronSpider demonstration on OpenPLC
+- E4: Service Worker resurrection testbed + **Behavioral anomaly detection extension**
 
 ## Status
 🔄 In progress - started Feb 17, 2026

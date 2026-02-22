@@ -263,7 +263,7 @@ The result confirmed that there had been a consistent increase in web-related co
 
 For the upgrade between v3.0.39 and v3.1.7, the total SLOC increased from 13,188(12,868 JS, 320 PHP) to 13,472 total SLOC(13,150 JS, 322 PHP). The aggregate cyclomatic complexity score also increased from 4,529 to 4,574. In addition, the upgrade between v3.09.04 and v4.02.13 showed an increase in total SLOC from 36,544(35,994 JS, 550 PHP) to 39,007 total SLOC(38,444 JS, 563 PHP), with the cyclomatic complexity score also increasing from 11,379 to 11,974.
 
-## Noteworthy changes in web-related content during firmware upgrades
+### Noteworthy changes in web-related content during firmware upgrades
 
 I strived to extend the paper's work further by moving from a quantitative analysis (SLOC, complexity) to a qualitative one. The question is: *what kind of* functionality was added between v3.0.39 and v4.02.13?, I looked for any noteworthy change in JS files between the v3.0.39 and v4.02.13 firmwares, that could have increased the area of attack surface for web applications codebase.
 
@@ -289,4 +289,19 @@ I strived to extend the paper's work further by moving from a quantitative analy
 | API Docs | 1 | `openapi/redoc.standalone.js` — self-describing REST API on-device |
 
 Every new "security" feature (AIDE, firewall, certificate management) is managed through the same WBM web interface that IronSpider's CVE chain can fully compromise, potentially causing new defensive capabilities to become attacker-controllable tools. Meanwhile, Docker on PLCs and persistent MQTT cloud channels represent qualitatively new ICS attack surface, which can only be found in v4.02.13.
- 
+
+## Day 6: Feb 22, 2026
+
+Today, I looked into Service Workers in more detail. 
+
+Service Worker is a Javascript code that runs on your browser to perform the following tasks: offline rendering, push notifications, background sync, and network interception. It caches HTML, CSS, or even API responses for providing the basic experience of a web application when offline.
+
+Service Worker's lifecycle has the following structure:
+- Registration: A Service Worker is initiated with `navigator.serviceWorker.register('/sw.js')`.
+- Installation: The Service Worker caches essential static assets.
+- Waiting: If there is an old version controlling open tabs, the new Service Worker waits unless `self.skipWaiting()` is called.
+- Activation: It is activated, cleans up old cache.
+- Controlling: Now, the Service Worker controls the tabs within its scope.
+- Idle/Terminated: The browser can terminate the Service Worker after a period of inactivity. When events like fetch, push, or sync occur, it will be reactivated.
+
+For WB malwares against PLC, a Service Worker registered by the malware can survive complete deletion of the malware from the ICS, checks the malware's presence periodically, and infect the cleansed system again by downloading the malware in the background.
