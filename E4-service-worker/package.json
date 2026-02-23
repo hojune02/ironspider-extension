@@ -1,0 +1,16 @@
+{
+  "name": "ironspider-sw-testbed",
+  "version": "1.0.0",
+  "description": "Service worker resurrection testbed — NDSS 2024 IronSpider replication study",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "setup": "bash setup.sh"
+  },
+  "keywords": ["service-worker", "security-research", "plc", "ics", "ndss2024"],
+  "author": "IronSpider Replication Study",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  }
+}

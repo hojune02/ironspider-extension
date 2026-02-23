@@ -305,3 +305,280 @@ Service Worker's lifecycle has the following structure:
 - Idle/Terminated: The browser can terminate the Service Worker after a period of inactivity. When events like fetch, push, or sync occur, it will be reactivated.
 
 For WB malwares against PLC, a Service Worker registered by the malware can survive complete deletion of the malware from the ICS, checks the malware's presence periodically, and infect the cleansed system again by downloading the malware in the background.
+
+## Day 7: Feb 23, 2026
+
+### W3C Service Worker Spec — Deep Study
+
+**Source**: W3C Service Workers Level 1 spec + MDN Service Worker API
+
+#### Lifecycle in Detail
+
+Registration triggers a browser-side state machine. The key states and their transitions:
+
+1. **`parsed`** → Script is fetched and syntactically valid
+2. **`installing`** → `install` event fires; `event.waitUntil(promise)` extends lifetime until promise settles. `skipWaiting()` here causes the SW to skip the "waiting" phase and move directly to "activating" even if an old SW controls clients.
+3. **`installed`** (waiting) → New SW is ready but an old version still controls open clients. Without `skipWaiting()`, it waits here until all clients are closed.
+4. **`activating`** → `activate` event fires; use `event.waitUntil()` to do cache cleanup. `self.clients.claim()` immediately takes control of all open clients without waiting for a page reload.
+5. **`activated`** → SW is fully in control; fetch/push/sync/message events are dispatched.
+6. **`redundant`** → SW is replaced by a newer version or failed to install.
+
+**Termination**: The browser may terminate an idle SW after ~30 seconds to save resources. It is automatically restarted the next time a relevant event (fetch, push, sync) fires. This is why `setInterval` in a SW only works while the SW is alive — but any user page interaction restarts the SW and the interval.
+
+#### `fetch` Event and `event.respondWith()`
+
+The `fetch` event fires for every network request made by the SW's scope (including requests from controlled pages, not just the page itself). `event.respondWith(responsePromise)` replaces the browser's default fetch behavior with whatever `Response` the promise resolves to.
+
+Critical detail: `respondWith()` must be called **synchronously** in the event handler — you cannot call it inside an async callback. The `Response` constructor accepts a string body and headers, enabling the SW to synthesize responses entirely from cache without hitting the network.
+
+This is how the fetch interception bypass works: the SW intercepts an HTML or JS request, modifies the body (e.g., appends a `<script>` tag), and returns the modified content as a new `Response`. The browser executes the injected script in the page's context, giving it full DOM/localStorage access that the SW itself lacks.
+
+#### Same-Origin Request Privilege (Key to Resurrection)
+
+Service Workers run in a renderer process **associated with the page's origin**. This means all `fetch()` calls from within the SW are same-origin with respect to the PLC's web interface. There is no CORS restriction — the SW can call any API on the same host. This is the core of the resurrection mechanism: after a factory reset, the SW re-uploads the malware payload by calling the same file-write API that was originally exploited for initial infection, but this time with no auth/CORS barrier.
+
+#### `Cache Storage API`
+
+`caches.open(name)` returns a `CacheStorage` instance. `cache.add(url)` fetches the URL and stores both request and response. `cache.match(url)` retrieves the cached `Response`. The cache persists across SW terminations and browser restarts — it only disappears if the user explicitly clears site data or the browser evicts it (after 24 hours idle, or under storage pressure). This is the "up to 24 hours" window the paper describes.
+
+### Paper Section IV-C — Resurrection Flow (drawn from memory)
+
+```
+[Initial Infection]
+  Browser visits PLC web interface
+  → malware.js loaded (via CVE chain: CORS bypass + auth bypass + file write)
+  → malware.js runs:
+       navigator.serviceWorker.register('/sw.js')
+  → sw.js installs:
+       caches.add('/malware.js')  ← payload stored in browser cache
+       skipWaiting() / clients.claim()
+  → sw.js starts monitor:
+       setInterval(checkForMalwareInfection, 5000)
+
+[Factory Reset]
+  Operator reimages PLC → /malware.js deleted from server
+  → sw.js still registered in browser (SW is stored in browser profile, NOT PLC)
+  → sw.js cache still has malware.js payload
+
+[Resurrection]
+  SW's interval fires:
+    fetch('/malware.js') → HTTP 404
+    → resurrect():
+         cache.match('/malware.js') → payload (string)
+         fetch('/upload', { method: 'POST', body: payload })
+           ← same-origin: no CORS, no auth needed
+         → malware.js re-written to PLC disk
+  → SW notifies open clients via postMessage
+  → Next page load: malware.js executes again
+
+[Hardware Replacement]
+  Even if PLC hardware is replaced:
+    → New PLC has same IP / web interface URL
+    → Same-origin SW in browser still active
+    → Resurrection runs against new hardware
+    → Initial CVEs no longer needed (SW already has same-origin access)
+```
+
+**Key insight**: The SW's "scope" is tied to the browser's origin model, not the physical device. Replacing hardware under the same URL does not affect the browser-cached SW. The operator must also clear browser data on every EWS/HMI machine in the network — which CISA's playbooks do not account for.
+
+#### Restriction Bypass via `respondWith`
+
+The paper notes that SW has no direct `localStorage`, DOM, or cookie access. But this is not a security boundary — it is an API design choice. The bypass:
+1. SW intercepts an HTML or JS request
+2. Appends a `<script>` block to the response body
+3. Returns modified response via `event.respondWith()`
+4. Injected script runs in the page context with full DOM/localStorage access
+
+This lets the SW extract CSRF tokens or session secrets needed to call authenticated APIs during resurrection — without the SW ever directly touching those APIs.
+
+### Building the Resurrection Testbed
+
+**Objective**: Build a local HTTPS testbed that replicates the three structural components of the IronSpider resurrection mechanism.
+
+**Location**: `E4-service-worker/`
+
+**Stack**: Node.js built-in `https` module (no external dependencies), mkcert for TLS.
+
+#### Why HTTPS is required
+
+Service Workers are only available on secure contexts (HTTPS or localhost with valid cert). Since we need to test the full flow — including the SW caching the payload and calling `/upload` — we must run under a real TLS cert. `mkcert` generates a locally-trusted certificate so Chrome/Firefox accept it without certificate errors, which would interfere with SW registration.
+
+Setup:
+```bash
+cd E4-service-worker
+bash setup.sh        # installs mkcert CA, generates certs/localhost.pem
+node server.js       # starts on https://localhost:8443/
+```
+
+#### File structure
+
+```
+E4-service-worker/
+├── server.js          Node.js HTTPS server
+├── setup.sh           mkcert setup (one-time)
+├── package.json
+├── .gitignore         (ignores certs/, node_modules/)
+├── certs/             TLS cert + key (gitignored)
+└── public/
+    ├── index.html     Simulated PLC dashboard (water treatment plant)
+    ├── malware.js     Simulated IronSpider payload
+    └── sw.js          Resurrection service worker
+```
+
+#### Server design (`server.js`)
+
+Three logical routes beyond static file serving:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/*` | GET | Static file server from `public/` |
+| `/reset` | POST | Simulate factory reset: `fs.unlinkSync('public/malware.js')` |
+| `/upload` | POST | Simulate PLC file-write API: receives `{filename, content}`, writes to `public/` |
+
+The `/upload` endpoint is the analogue of CVE-2022-45140 (arbitrary file write via `network_config` API). In the real attack, the SW calls this API same-origin using the operator's authenticated session. In our testbed it is an unauthenticated local endpoint, which is equivalent because same-origin implies already-authenticated context.
+
+`Cache-Control: no-store` is set on all responses so the browser HTTP cache does not mask the factory-reset event. The SW's `CacheStorage` is separate and unaffected by this.
+
+#### `public/sw.js` — Resurrection Service Worker design
+
+Three event handlers:
+
+**`install`**: `skipWaiting()` + `caches.add('/malware.js')`. The `skipWaiting()` call makes the new SW immediately active without waiting for the existing page to close. The `caches.add()` stores the malware payload in `CacheStorage` before anything else. This is the persistence anchor.
+
+**`activate`**: `self.clients.claim()` takes control of all open tabs without waiting for a reload. Calls `startMonitor()` to begin the `setInterval` resurrection check.
+
+**`fetch`**: Two roles:
+1. Restarts `startMonitor()` if the SW was terminated and woken by a fetch event.
+2. Intercepts `index.html` requests and injects a `<script>` tag via `respondWith(new Response(modifiedHTML))`. This demonstrates the "no DOM access" bypass: the injected script reads `localStorage` and updates the page DOM.
+
+**`setInterval` (5000ms)**: Polls `/malware.js?_sw=<timestamp>` with `cache: 'no-store'` to bypass HTTP cache. If response is non-2xx or a network error: calls `resurrect()`.
+
+**`resurrect()`**:
+1. `caches.open(CACHE_NAME).then(c => c.match('/malware.js'))` — retrieves payload from SW cache
+2. `fetch('/upload', {method:'POST', body: JSON.stringify({filename, content})})` — re-uploads to server
+3. `self.clients.matchAll().then(...)` — `postMessage({type:'RESURRECTED'})` to all open tabs
+
+**`notifyClients()`**: Uses `self.clients.matchAll({includeUncontrolled: true})` so tabs that opened before the SW was registered still get the notification.
+
+#### `public/malware.js` — Simulated Payload design
+
+Executes three phases (all local, no external network):
+
+1. **SW registration**: `navigator.serviceWorker.register('/sw.js', {scope: '/'})`, then dispatches `malware-sw-registered` custom event so the dashboard can update its status indicators.
+
+2. **Display spoofing**: Overrides four sensor `<span>` elements with fabricated "safe" values. Real values were chosen to be alarming (187 PSI pump pressure, 0.07 ppm chlorine, 94% reservoir level) so the visual contrast before/after spoofing is obvious. After spoofing, the operator would see green "NORMAL" readings while the actual conditions are dangerous.
+
+3. **Exfiltration simulation**: Collects `document.cookie`, `localStorage` keys, page title, URL, and logs them to console. In real IronSpider this data would be POSTed to an attacker C2 server.
+
+#### `public/index.html` — PLC Dashboard design
+
+Two-column layout:
+- **Left**: Sensor table (pump pressure, reservoir level, chlorine concentration, flow rate) with real alarming values shown in red. Four alarm indicators (all `TRIGGERED`). When malware.js runs, the sensor values change to green spoofed values and alarms change to `OK`.
+- **Right**: Security status panel (malware.js present, payload executing, SW registered, resurrection count) + testbed control buttons.
+
+Below: SW fetch injection demo panel + scrolling event log.
+
+Demo control buttons correspond directly to the 6-step verification in Day 10:
+1. **"Inject Malware"** → dynamically creates `<script src="/malware.js">` and appends to body
+2. **"Factory Reset"** → `POST /reset`
+3. **"Check malware.js Status"** → manual fetch check
+
+SW messages (`RESURRECTION_STARTED`, `RESURRECTED`, `RESURRECTION_FAILED`) are handled by `navigator.serviceWorker.addEventListener('message', ...)` and appended to the event log with color coding.
+
+### Resurrection Cycle Verification
+
+**Objective**: Step through the 6-step resurrection cycle manually and confirm all transitions work.
+
+#### Verified steps
+
+**Step 1 — Register sw.js ✓**
+
+Server log on first load:
+```
+GET    /                              200 (22246b)
+GET    /sw.js                         200 (8748b)
+```
+Browser DevTools → Application → Service Workers shows `sw.js` in `activated` state with scope `/`.
+
+**Step 2 — Serve malware.js to browser ✓**
+
+Clicking "Inject Malware" triggers:
+```
+GET    /malware.js                    200 (5459b)
+```
+Console shows:
+```
+[MALWARE] IronSpider simulation payload loaded and executing
+[MALWARE] resurrection SW registered — scope: /
+[MALWARE] display spoofing applied — dangerous readings hidden from operator
+[MALWARE] simulated exfiltration payload: {...}
+```
+Dashboard: sensor values turn green (spoofed), alarms show `OK`, infection banner appears.
+
+**Step 3 — Delete malware.js (simulating factory reset) ✓**
+
+Clicking "Factory Reset" issues `POST /reset`. Server log:
+```
+POST   /reset     *** FACTORY RESET: malware.js deleted from disk
+```
+Response: `{"ok":true,"message":"Factory reset complete — malware.js deleted"}`
+Dashboard: `malware.js on server` status changes from `PRESENT (HTTP 200)` to `ABSENT (HTTP 404)`.
+
+Note: SW is **still registered** in the browser. `Application → Service Workers` still shows it active. The SW's `CacheStorage` still contains the malware.js payload.
+
+**Step 4 — Reload page — sw.js intercepts the missing file request ✓**
+
+5 seconds after reset, SW console shows:
+```
+[SW] [13:15:23.341] malware.js → HTTP 404 — RESURRECTION TRIGGERED
+[SW] *** RESURRECTION SEQUENCE INITIATED ***
+[SW] cached payload retrieved: 5459 bytes
+```
+The SW's `setInterval` fired, fetched `/malware.js?_sw=<ts>` with `cache: 'no-store'`, got HTTP 404 (because the file was deleted), and immediately entered the resurrection path.
+
+**Step 5 — Resurrection code re-uploads malware.js ✓**
+
+Server log:
+```
+POST   /upload    *** RESURRECTION: wrote malware.js (5459 bytes)
+```
+The SW retrieved its cached copy of malware.js and POSTed it to `/upload` (same-origin, no auth needed). The file is back on disk.
+
+**Step 6 — Malware continues executing ✓**
+
+The SW sends `postMessage({type: 'RESURRECTED'})` to all open tabs. The dashboard JS handler receives it, increments the resurrection counter, and dynamically creates a new `<script src="/malware.js">` element. The malware payload re-executes: display spoofing resumes, alarms return to `OK`.
+
+Event log entry:
+```
+[13:15:23]  [SW ★ RESURRECTION ★]  malware.js re-uploaded via /upload (same-origin API). Malware persists!
+[13:15:23]  [MALWARE]              Payload re-executed after resurrection
+```
+
+#### Fetch Interception Bypass — verified
+
+After the SW is registered and the page is reloaded, the `sw-dom-injection` element shows:
+```
+YES — injected by SW via respondWith()
+```
+If a session token is stored in localStorage before reloading, the injected script extracts and displays it, confirming that the SW can access localStorage-stored secrets indirectly through page injection — despite having no direct `localStorage` API access.
+
+#### Key observations
+
+1. **The factory reset does nothing to the browser**. Deleting the file from the server does not unregister the SW. The SW lives in the browser profile, not in the PLC filesystem.
+
+2. **The 5-second interval is sufficient for a compelling demo**. In a real attack the interval could be longer (e.g., 60s) to reduce server log noise and evade simple rate-based detection.
+
+3. **The resurrection is fully autonomous**. Once the SW is registered, no further operator action is required. The page does not even need to be open — if any tab on the same origin makes a fetch, the SW wakes up and the monitor restarts.
+
+4. **Cache-Control: no-store on the server did not interfere with SW CacheStorage**. The browser's HTTP cache and the SW's `CacheStorage` are separate storage mechanisms. Setting `no-store` on server responses prevents the browser from keeping its own copy, but the SW explicitly caches using the Cache API, which is not governed by HTTP cache headers.
+
+#### Screenshots from the demo
+
+1. Clean dashboard (real alarming sensor values, no malware)
+![alt text](image-4.png)
+2. After "Inject Malware" click (spoofed green values, SW registered)
+![alt text](image-5.png)
+3. After "Factory Reset" click (malware absent, SW still registered)
+![alt text](image-6.png)
+4. Automatic resurrection (malware back, log shows ★ RESURRECTION ★)
+![alt text](image-7.png)

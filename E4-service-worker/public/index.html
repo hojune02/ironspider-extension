@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenPLC — Water Treatment Plant HMI</title>
+  <style>
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #161b22;
+      border-bottom: 2px solid #21262d;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 14px; color: #58a6ff; letter-spacing: 1px; }
+    header .sys-info { font-size: 11px; color: #8b949e; }
+
+    /* ── Infection banner (injected by malware.js) ── */
+    #infection-banner {
+      display: none;
+      background: #c0392b;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      animation: blink 1.2s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.6; } }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Panels ── */
+    .panel {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: #21262d;
+      padding: 8px 14px;
+      font-size: 11px;
+      color: #8b949e;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-header .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #3fb950;
+      display: inline-block;
+    }
+    .panel-body { padding: 14px; }
+
+    /* ── Sensor table ── */
+    .sensor-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .sensor-table tr { border-bottom: 1px solid #21262d; }
+    .sensor-table tr:last-child { border-bottom: none; }
+    .sensor-table td { padding: 10px 8px; vertical-align: middle; }
+    .sensor-label { color: #8b949e; width: 45%; }
+    .sensor-value { font-size: 16px; font-weight: bold; color: #e6edf3; }
+    .sensor-value.danger { color: #f85149; }
+    .sensor-value.spoofed { color: #2ecc71 !important; }
+    .sensor-unit { color: #8b949e; font-size: 11px; padding-left: 4px; }
+    .sensor-range { color: #8b949e; font-size: 10px; }
+
+    /* ── Alarm table ── */
+    .alarm-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    .alarm-table th {
+      color: #8b949e; text-align: left; padding: 6px 8px;
+      border-bottom: 1px solid #21262d; font-weight: normal;
+    }
+    .alarm-table td { padding: 7px 8px; border-bottom: 1px solid #21262d; }
+    .alarm-cell { padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
+    .alarm-active { background: #3d1a1a; color: #f85149; border: 1px solid #f85149; }
+    .alarm-ok { background: #1a3d1a; color: #3fb950; border: 1px solid #3fb950; }
+
+    /* ── Status panel ── */
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 12px;
+    }
+    .status-row:last-child { border-bottom: none; }
+    .status-label { color: #8b949e; }
+    .status-val { font-weight: bold; padding: 2px 8px; border-radius: 3px; font-size: 11px; }
+    .status-ok      { background: #1a3d1a; color: #3fb950; }
+    .status-danger  { background: #3d1a1a; color: #f85149; }
+    .status-warn    { background: #3d2f1a; color: #e3b341; }
+    .status-info    { background: #1a2a3d; color: #58a6ff; }
+    .status-neutral { background: #21262d; color: #8b949e; }
+
+    /* ── Testbed controls ── */
+    .step-label {
+      font-size: 10px;
+      color: #8b949e;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 9px 12px;
+      margin-bottom: 8px;
+      border: 1px solid;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      transition: opacity 0.15s;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.8; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-infect  { background: #3d1a1a; color: #f85149; border-color: #f85149; }
+    .btn-reset   { background: #1a3d1a; color: #3fb950; border-color: #3fb950; }
+    .btn-check   { background: #21262d; color: #8b949e; border-color: #30363d; }
+    .btn-secret  { background: #1a2a3d; color: #58a6ff; border-color: #58a6ff; }
+
+    /* ── SW Bypass Demo ── */
+    .bypass-section {
+      grid-column: 1 / -1;
+    }
+    .bypass-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .bypass-table td { padding: 8px; border-bottom: 1px solid #21262d; vertical-align: top; }
+    .bypass-table td:first-child { color: #8b949e; width: 35%; }
+    .bypass-demo-val { font-style: italic; color: #8b949e; }
+
+    /* ── Event log ── */
+    .log-section { grid-column: 1 / -1; }
+    #event-log {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 4px;
+      height: 180px;
+      overflow-y: auto;
+      padding: 8px;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .log-entry { display: block; padding: 1px 0; }
+    .log-ts    { color: #6e7681; }
+    .log-tag   { font-weight: bold; margin: 0 4px; }
+    .log-normal  { color: #c9d1d9; }
+    .log-danger  .log-tag { color: #f85149; }
+    .log-warn    .log-tag { color: #e3b341; }
+    .log-ok      .log-tag { color: #3fb950; }
+    .log-info    .log-tag { color: #58a6ff; }
+    .log-resurrect .log-tag { color: #ff7b72; font-size: 12px; }
+
+    /* ── Misc ── */
+    .section-divider {
+      grid-column: 1 / -1;
+      border: none;
+      border-top: 1px solid #21262d;
+    }
+    small { color: #6e7681; font-size: 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>&#9632; OpenPLC Runtime — Water Treatment Plant HMI</h1>
+  <span class="sys-info" id="sys-clock">--:--:--</span>
+</header>
+
+<div id="infection-banner"></div>
+
+<div class="layout">
+
+  <!-- ── LEFT: PLC Sensor Readings ── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="dot"></span>
+      Live Sensor Readings
+      <span style="margin-left:auto; font-size:10px;" id="poll-indicator">POLLING</span>
+    </div>
+    <div class="panel-body">
+      <table class="sensor-table">
+        <tr>
+          <td class="sensor-label">Pump Pressure</td>
+          <td>
+            <span class="sensor-value danger" id="sensor-pressure">187 PSI</span>
+            <span class="sensor-unit">PSI</span><br>
+            <span class="sensor-range">Normal: 60–150 PSI</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="sensor-label">Reservoir Level</td>
+          <td>
+            <span class="sensor-value danger" id="sensor-level">94%</span>
+            <span class="sensor-unit">%</span><br>
+            <span class="sensor-range">Normal: 40–80%</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="sensor-label">Chlorine Conc.</td>
+          <td>
+            <span class="sensor-value danger" id="sensor-chlorine">0.07 ppm</span>
+            <span class="sensor-unit">ppm</span><br>
+            <span class="sensor-range">Normal: 0.2–4.0 ppm</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="sensor-label">Flow Rate</td>
+          <td>
+            <span class="sensor-value danger" id="sensor-flow">850 L/min</span>
+            <span class="sensor-unit">L/min</span><br>
+            <span class="sensor-range">Normal: 200–600 L/min</span>
+          </td>
+        </tr>
+      </table>
+
+      <p style="font-size:10px; color:#8b949e; margin-top:12px; padding-top:10px; border-top:1px solid #21262d;">
+        Active alarms
+      </p>
+      <table class="alarm-table">
+        <tr>
+          <th>Alarm</th><th>Setpoint</th><th>Status</th>
+        </tr>
+        <tr>
+          <td>High Pump Pressure</td>
+          <td>&gt; 150 PSI</td>
+          <td><span class="alarm-cell alarm-active" id="alarm-pressure">TRIGGERED</span></td>
+        </tr>
+        <tr>
+          <td>High Reservoir Level</td>
+          <td>&gt; 85%</td>
+          <td><span class="alarm-cell alarm-active" id="alarm-level">TRIGGERED</span></td>
+        </tr>
+        <tr>
+          <td>Low Chlorine</td>
+          <td>&lt; 0.2 ppm</td>
+          <td><span class="alarm-cell alarm-active" id="alarm-chlorine">TRIGGERED</span></td>
+        </tr>
+        <tr>
+          <td>High Flow Rate</td>
+          <td>&gt; 600 L/min</td>
+          <td><span class="alarm-cell alarm-active" id="alarm-flow">TRIGGERED</span></td>
+        </tr>
+      </table>
+      <small style="display:block; margin-top:10px;">
+        &#8593; Real values — operator would see these WITHOUT malware active.
+        When malware.js loads, display spoofing replaces them with safe-looking values.
+      </small>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Security Status + Testbed Controls ── -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Security status -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="dot" style="background:#f85149;"></span>
+        Security Status
+      </div>
+      <div class="panel-body">
+        <div class="status-row">
+          <span class="status-label">malware.js on server</span>
+          <span class="status-val status-neutral" id="st-malware-file">CHECKING...</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Payload executing</span>
+          <span class="status-val status-neutral" id="st-payload">NOT LOADED</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Service Worker</span>
+          <span class="status-val status-neutral" id="st-sw">NOT REGISTERED</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">SW state</span>
+          <span class="status-val status-neutral" id="st-sw-state">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Resurrections</span>
+          <span class="status-val status-neutral" id="st-resurrections">0</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Last resurrection</span>
+          <span class="status-val status-neutral" id="st-last-resurrection">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testbed controls -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="dot" style="background:#e3b341;"></span>
+        Testbed Controls (Day 7 Demo)
+      </div>
+      <div class="panel-body">
+        <div class="step-label">STEP 1 — Initial infection (load malware.js + register SW)</div>
+        <button class="btn btn-infect" id="btn-infect" onclick="stepInfect()">
+          &#9654; Inject Malware
+        </button>
+
+        <div class="step-label">STEP 2 — Simulate factory reset (delete malware.js from server)</div>
+        <button class="btn btn-reset" id="btn-reset" onclick="stepReset()" disabled>
+          &#9642; Factory Reset
+        </button>
+
+        <div class="step-label">STEP 3 — Wait ~5 seconds. SW resurrects automatically.</div>
+        <button class="btn btn-check" onclick="checkMalwareFile()">
+          &#8635; Check malware.js Status
+        </button>
+
+        <div class="step-label">Bonus — store a secret to demonstrate SW localStorage bypass</div>
+        <button class="btn btn-secret" onclick="storeSecret()">
+          Store Session Token in localStorage
+        </button>
+
+        <div style="font-size:10px; color:#6e7681; margin-top:8px;">
+          Open DevTools &rarr; Application &rarr; Service Workers to observe SW lifecycle.<br>
+          Open Console to see [SW] and [MALWARE] log messages.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── SW Restriction Bypass Demo ── -->
+  <div class="panel bypass-section">
+    <div class="panel-header">
+      <span class="dot" style="background:#e3b341;"></span>
+      SW Fetch Interception — "No DOM Access" Bypass Demo
+    </div>
+    <div class="panel-body">
+      <p style="font-size:11px; color:#8b949e; margin-bottom:12px;">
+        The W3C spec says service workers have no access to DOM, localStorage, or cookies.
+        This is NOT a security boundary — it's an API design choice. The SW intercepts
+        HTML responses via <code>respondWith()</code> and appends a <code>&lt;script&gt;</code>
+        tag. That injected script runs inside the page with full privileges.
+      </p>
+      <table class="bypass-table">
+        <tr>
+          <td>SW code injected into this page?</td>
+          <td>
+            <span id="sw-dom-injection" class="bypass-demo-val status-val status-neutral">
+              Waiting for SW activation... (reload page after SW registers)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td>localStorage token extracted by SW injection</td>
+          <td>
+            <span id="sw-extracted-token" class="bypass-demo-val status-val status-neutral">
+              —
+            </span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Event Log ── -->
+  <div class="panel log-section">
+    <div class="panel-header">
+      <span class="dot" style="background:#58a6ff;"></span>
+      Event Log
+      <button onclick="document.getElementById('event-log').innerHTML=''"
+        style="margin-left:auto; background:none; border:1px solid #30363d; color:#8b949e;
+               font-size:10px; padding:2px 8px; border-radius:3px; cursor:pointer;">
+        Clear
+      </button>
+    </div>
+    <div class="panel-body" style="padding:8px;">
+      <div id="event-log"></div>
+    </div>
+  </div>
+
+</div><!-- /.layout -->
+
+<script>
+'use strict';
+
+// ── State ──────────────────────────────────────────────────────────────────
+let malwareLoaded       = false;
+let swRegistered        = false;
+let resurrectionCount   = 0;
+
+// ── Clock ──────────────────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('sys-clock').textContent =
+    new Date().toLocaleTimeString('en-US', { hour12: false });
+}, 1000);
+
+// ── Logging ────────────────────────────────────────────────────────────────
+function log(tag, message, cls) {
+  const el  = document.getElementById('event-log');
+  const ts  = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const row = document.createElement('span');
+  row.className = `log-entry log-${cls || 'normal'}`;
+  row.innerHTML = `<span class="log-ts">[${ts}]</span>`
+                + `<span class="log-tag">[${tag}]</span>`
+                + `<span> ${message}</span>`;
+  el.appendChild(row);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Status helpers ─────────────────────────────────────────────────────────
+function setStatus(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className   = `status-val status-${cls}`;
+}
+
+// ── Check malware.js on server ─────────────────────────────────────────────
+async function checkMalwareFile() {
+  try {
+    const resp   = await fetch('/malware.js?_check=' + Date.now(), { cache: 'no-store' });
+    const exists = resp.ok;
+    setStatus('st-malware-file',
+      exists ? 'PRESENT (HTTP 200)' : `ABSENT (HTTP ${resp.status})`,
+      exists ? 'danger' : 'ok'
+    );
+    return exists;
+  } catch {
+    setStatus('st-malware-file', 'FETCH ERROR', 'warn');
+    return false;
+  }
+}
+
+// ── Poll malware.js status every 2 seconds ─────────────────────────────────
+setInterval(checkMalwareFile, 2000);
+
+// ── Poll SW registration status ────────────────────────────────────────────
+async function pollSWStatus() {
+  if (!('serviceWorker' in navigator)) {
+    setStatus('st-sw', 'NOT SUPPORTED', 'neutral');
+    return;
+  }
+  const reg = await navigator.serviceWorker.getRegistration('/');
+  if (reg) {
+    const sw = reg.active || reg.installing || reg.waiting;
+    setStatus('st-sw', 'REGISTERED', 'danger');
+    setStatus('st-sw-state', sw ? sw.state.toUpperCase() : '—', 'warn');
+  } else {
+    setStatus('st-sw', 'NOT REGISTERED', 'ok');
+    setStatus('st-sw-state', '—', 'neutral');
+  }
+}
+setInterval(pollSWStatus, 1500);
+
+// ── STEP 1: Inject malware ─────────────────────────────────────────────────
+async function stepInfect() {
+  if (malwareLoaded) { log('UI', 'Malware already loaded', 'warn'); return; }
+
+  const exists = await checkMalwareFile();
+  if (!exists) {
+    log('UI', 'malware.js not found on server — cannot inject (was it deleted?)', 'warn');
+    return;
+  }
+
+  log('ATTACK', 'Loading malware.js dynamically (simulates CVE-2022-45140 file write)', 'danger');
+  const script   = document.createElement('script');
+  script.src     = '/malware.js?' + Date.now();
+  script.onerror = () => log('ERROR', 'Failed to load malware.js', 'warn');
+  document.body.appendChild(script);
+
+  document.getElementById('btn-reset').disabled = false;
+}
+
+// ── STEP 2: Factory reset ──────────────────────────────────────────────────
+async function stepReset() {
+  log('OPERATOR', 'Initiating factory reset — calling POST /reset', 'warn');
+  const resp = await fetch('/reset', { method: 'POST' });
+  const data = await resp.json();
+  log('OPERATOR', data.message, 'ok');
+  await checkMalwareFile();
+  setStatus('st-payload', 'REMOVED (malware.js deleted)', 'ok');
+  log('SW', 'SW still registered. Resurrection monitor running...', 'info');
+  log('SW', 'Next check in ≤5 seconds...', 'info');
+}
+
+// ── Bonus: store localStorage secret ──────────────────────────────────────
+function storeSecret() {
+  const token = 'plc-session-' + Math.random().toString(36).slice(2, 10);
+  localStorage.setItem('plc-session-token', token);
+  log('UI', `Stored in localStorage: plc-session-token = ${token}`, 'info');
+  log('UI', 'Reload the page (after SW is registered) to see SW inject & extract it', 'info');
+}
+
+// ── Service Worker message handler ────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', event => {
+    const { type, timestamp, reason } = event.data || {};
+    switch (type) {
+      case 'RESURRECTION_STARTED':
+        log('SW', 'malware.js → 404 detected. Resurrection sequence initiated...', 'warn');
+        setStatus('st-last-resurrection', new Date(timestamp).toLocaleTimeString(), 'warn');
+        break;
+
+      case 'RESURRECTED':
+        resurrectionCount++;
+        setStatus('st-resurrections', String(resurrectionCount), 'danger');
+        setStatus('st-last-resurrection', new Date(timestamp).toLocaleTimeString(), 'danger');
+        log('SW ★ RESURRECTION ★', 'malware.js re-uploaded via /upload (same-origin API). Malware persists!', 'resurrect');
+        // Re-execute malware payload so display spoofing resumes
+        setTimeout(() => {
+          const s = document.createElement('script');
+          s.src   = '/malware.js?' + Date.now();
+          document.body.appendChild(s);
+          log('MALWARE', 'Payload re-executed after resurrection', 'danger');
+        }, 400);
+        checkMalwareFile();
+        break;
+
+      case 'RESURRECTION_FAILED':
+        log('SW', `Resurrection failed: ${reason}`, 'warn');
+        break;
+    }
+  });
+}
+
+// ── Malware event listeners ────────────────────────────────────────────────
+window.addEventListener('malware-active', () => {
+  malwareLoaded = true;
+  setStatus('st-payload', 'EXECUTING', 'danger');
+  log('MALWARE', 'IronSpider payload active — display spoofing running', 'danger');
+});
+
+window.addEventListener('malware-sw-registered', e => {
+  swRegistered = true;
+  setStatus('st-sw', 'REGISTERED', 'danger');
+  log('MALWARE', `Resurrection SW registered (scope: ${e.detail.scope})`, 'danger');
+  log('MALWARE', 'SW will survive factory reset and re-upload malware.js on 404', 'danger');
+});
+
+window.addEventListener('malware-resurrected', e => {
+  log('MALWARE', 'Resurrection confirmed via SW→page postMessage', 'danger');
+});
+
+// ── Initial checks ─────────────────────────────────────────────────────────
+(async () => {
+  await checkMalwareFile();
+  await pollSWStatus();
+  log('SYSTEM', 'Testbed ready. Click "Inject Malware" to begin the demo.', 'info');
+  log('SYSTEM', 'Open DevTools → Console to see [SW] and [MALWARE] logs.', 'info');
+})();
+</script>
+</body>
+</html>
