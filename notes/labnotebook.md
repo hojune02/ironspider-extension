@@ -651,6 +651,14 @@ the malware payload is similarly in the browser profile.  The "new server" is ju
 process listening on the same port — from the SW's perspective, it is indistinguishable from
 the old one.
 
+![alt text](image-12.png)
+Currently, the server runs with PID of 545084. SW is registered on the browser, continuously checking for response from malware.js. 
+![alt text](image-11.png)
+Then, the server is closed with Ctrl+C and malware.js and sw.js are deleted from the server's public directory by `rm public/malware.js` and `rm public/sw.js`. This represents a complete hardware replacement.
+![alt text](image-13.png)
+![alt text](image-14.png)
+Running the server again and taking a snapshot results in different PID, as shown above. This represents a completely different PLC. However, the SW that was stored in the browser checks the presence of `malware.js`, and uploads it again to the server if it does not exist. This is possible by using `malware.js` stored in the CacheStorage. The browser-stored `sw.js` also uploads itself to the server again from the cache. The different PID and the re-upload of `malware.js` is shown in the screenshot above.
+
 ---
 
 ### Test 2: The 24-Hour Cache Limit

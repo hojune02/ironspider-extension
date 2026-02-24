@@ -110,18 +110,24 @@ function handleRequest(req, res) {
   }
 
   // ── POST /reset — simulate factory reset ─────────────────────────────────
+  // A real factory reset wipes the entire PLC filesystem, including both
+  // malware.js (the payload) and sw.js (the persistence engine uploaded by
+  // the attacker).  We delete both here so the testbed accurately reflects
+  // what a defender would do — and so the SW's self-resurrection of sw.js
+  // can be observed as a distinct, verifiable event in the server log.
   if (req.method === 'POST' && req.url === '/reset') {
-    const malwarePath = path.join(PUBLIC_DIR, 'malware.js');
-    if (fs.existsSync(malwarePath)) {
-      fs.unlinkSync(malwarePath);
-      log(req.method, req.url, '*** FACTORY RESET: malware.js deleted from disk');
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, message: 'Factory reset complete — malware.js deleted' }));
-    } else {
-      log(req.method, req.url, 'malware.js already absent');
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, message: 'malware.js was already absent' }));
+    const toDelete = ['malware.js', 'sw.js'];
+    const deleted  = [];
+    for (const name of toDelete) {
+      const p = path.join(PUBLIC_DIR, name);
+      if (fs.existsSync(p)) { fs.unlinkSync(p); deleted.push(name); }
     }
+    const msg = deleted.length
+      ? `Factory reset — deleted: ${deleted.join(', ')}`
+      : 'Factory reset — attacker files already absent';
+    log(req.method, req.url, `*** FACTORY RESET: ${deleted.join(', ') || 'nothing to delete'}`);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, message: msg, deleted }));
     return;
   }
 
