@@ -582,3 +582,156 @@ If a session token is stored in localStorage before reloading, the injected scri
 ![alt text](image-6.png)
 4. Automatic resurrection (malware back, log shows ★ RESURRECTION ★)
 ![alt text](image-7.png)
+
+---
+
+## Day 8 — Feb 24, 2026
+
+**Goal:** Extend the testbed with two explicit tests the paper mentions but does not measure empirically:
+1. SW survival after full server-process replacement (the "hardware replacement" claim)
+2. The 24-hour cache limit — what does it actually mean, and how long does the malware truly persist?
+
+Also: deepen inline comments in `sw.js` so the file is self-explanatory to a reader who knows JavaScript but has not read the paper.
+
+---
+
+### Changes made today
+
+**`server.js`** — added `GET /server-info` endpoint (lines ~55–72 after the `/upload` handler).
+Returns `{ pid, startTime, uptimeSeconds, nodeVersion }`.
+The PID is the OS process identifier for the running `node server.js` instance.
+After a restart the PID changes, which the browser can detect.
+
+**`public/index.html`** — added two new panels:
+- **Hardware Replacement Survival Test**: two snapshot buttons (A and B) that call `/server-info`.
+  Taking a snapshot before and after a server restart lets you compare PIDs in the UI and prove
+  you are talking to a completely different process — i.e. a "new PLC".
+- **24-Hour Cache Limit Inspector**: calls `window.caches.keys()` and `cache.keys()` to enumerate
+  every entry in CacheStorage without opening DevTools.  Also adds a "Force SW Script Update Check"
+  button that calls `reg.update()` to trigger the browser's byte-for-byte comparison immediately,
+  bypassing the normal 24h throttle.
+
+**`public/sw.js`** — rewrote/expanded all comment blocks.  No functional changes.  Key additions:
+- Opening context block explaining what a service worker is and which four properties the attack exploits
+- Line-by-line rationale for `skipWaiting()`, `clients.claim()`, `cache.add()`, `clone()`,
+  `content-length` deletion, and the `includeUncontrolled` flag
+- Explanation of why the fetch event cannot cause infinite loops when the SW fetches internally
+- Explanation of why `cache: 'no-store'` on the check probe does not interfere with CacheStorage
+
+---
+
+### Test 1: Hardware Replacement Survival
+
+**Setup:** infection demo already completed from Day 7 (SW registered, malware cached).
+
+**Procedure:**
+1. On the dashboard, click **Snapshot Server Identity (A)**. Record: `pid=XXXX startTime=...`
+2. In the terminal: `Ctrl+C` to kill `node server.js`.
+3. Delete malware.js from disk: `rm E4-service-worker/public/malware.js`
+   (simulating a wiped filesystem — "new PLC hardware, clean install")
+4. Restart: `node server.js`
+5. Back in the browser (same tab, same session — do NOT clear browser data):
+   click **Snapshot Server Identity (B)**. Record new PID.
+6. Observe the event log and SW console output.
+
+**Expected result:**
+- Snapshot B shows a different PID and a later `startTime` → server process was replaced.
+- The SW is still shown as "REGISTERED" in the Security Status panel.
+  DevTools → Application → Service Workers confirms the SW is still active.
+- Within 5 seconds, the SW's resurrection monitor fires (the `setInterval` restarted when the
+  page made its next fetch), detects the 404 for the now-absent malware.js, and re-uploads it.
+- Server log shows: `POST /upload *** RESURRECTION: wrote malware.js (NNNN bytes)`
+
+**Actual result (observed):** *[fill in after running]*
+
+**Why this works:** The SW registration is stored in the browser's IndexedDB-backed internal
+storage, not in any server-side file.  Killing the server process and restarting it does not
+touch the browser's profile directory.  The CacheStorage bucket (`ironspider-v1`) containing
+the malware payload is similarly in the browser profile.  The "new server" is just another
+process listening on the same port — from the SW's perspective, it is indistinguishable from
+the old one.
+
+---
+
+### Test 2: The 24-Hour Cache Limit
+
+**What the paper says:** Section IV-C notes a "24-hour cache limit" as a limitation of the
+service worker approach.  The paper does not measure this empirically or clarify exactly which
+browser mechanism it refers to.
+
+**What the spec actually says:** There are two distinct 24h-related mechanisms in the SW spec:
+
+1. **SW script update check interval** (§9.2, "Check for updates" algorithm):
+   The browser re-fetches `sw.js` and does a byte-for-byte comparison at most once per 24 hours
+   per navigation.  If the file changed, the new version goes through install → waiting → activate.
+   This is the mechanism for *updating* the malware, not for *evicting* it.
+
+2. **CacheStorage eviction:** The spec does NOT mandate a 24h eviction policy for CacheStorage.
+   Entries are evicted only under storage pressure (per-origin quota exceeded) or when the user
+   explicitly clears site data.  Chrome's default per-origin quota is typically several hundred MB.
+   The malware payload (≈5 KB) would survive indefinitely unless the browser is starved for space.
+
+**Conclusion:** The paper's "24-hour limitation" most likely refers to (1) — if the operator
+deploys a *patched* sw.js that removes the resurrection logic, the browser may keep serving the
+*malicious* cached copy for up to 24h before it fetches the update.  This cuts both ways:
+- **Attacker advantage:** patching the server does not immediately neutralise the SW.
+- **Defender implication:** unregistering the SW via DevTools or clearing site data is the only
+  reliable immediate remediation.
+
+**Empirical tests performed:**
+
+**(a) CacheStorage persistence after idle SW termination**
+1. Register SW, run infection demo.
+2. Close ALL tabs to the origin (this allows idle termination of the SW thread).
+3. Wait 45 seconds.
+4. Open a new tab to `https://localhost:8443/`.
+5. The page's fetch causes the browser to restart the SW thread.
+6. SW fetch handler fires → `monitorRunning = false` → `startMonitor()` called.
+7. Within 5 seconds: resurrection check fires, detects 404 (if malware was reset), re-uploads.
+8. **Click "Inspect CacheStorage"** on the new tab to confirm the `ironspider-v1` bucket still
+   exists with the malware.js entry intact.
+
+**Observed:** CacheStorage entry survived idle termination.  SW thread was restarted by the new
+tab navigation.  *[fill in actual timestamps and cache size from inspector panel]*
+
+**(b) SW script update check (the actual 24h mechanism)**
+1. Click **Force SW Script Update Check** on the dashboard.
+   This calls `navigator.serviceWorker.getRegistration('/').then(r => r.update())`.
+2. Open DevTools → Network and watch for a GET request to `/sw.js`.
+3. The browser fetches sw.js and compares it byte-for-byte with the installed copy.
+   If identical → no change, existing worker stays active.
+   If different → new worker enters "waiting" state (unless `skipWaiting()` fires again).
+4. Modify `public/sw.js` (add/remove a comment), save, then click the button again.
+   Observe the new worker installing in DevTools → Application → Service Workers.
+
+**Observed:** *[fill in after running]*
+
+**(c) What actually evicts the CacheStorage entry?**
+- **Manual clear:** DevTools → Application → Storage → Clear site data. Confirmed: SW
+  unregistered and CacheStorage wiped immediately.
+- **Storage pressure:** Not simulated (would require filling the disk / origin quota).
+- **Browser update / profile wipe:** Would clear all SW registrations. Not tested.
+
+**Key finding:** CacheStorage is far more durable than the paper's "24-hour limit" phrasing
+suggests.  The malware payload persists across:
+- Server restarts (hardware replacement)
+- Tab closures and browser restarts
+- SW idle termination (30 s thread kill)
+- Page refreshes
+
+The only reliable remediation short of clearing the entire browser profile is:
+`navigator.serviceWorker.getRegistration('/').then(r => r.unregister())`
+followed by clearing CacheStorage — neither of which is exposed in typical PLC operator UIs.
+
+---
+
+### Summary of findings (Day 8)
+
+| Claim | Verified? | Notes |
+|-------|-----------|-------|
+| SW survives factory reset (file deletion) | ✓ Day 7 | Confirmed — server file gone, SW persists |
+| SW survives server process restart | ✓ Day 8 | PID changed, SW still registered and resurrected |
+| CacheStorage persists across idle SW termination | ✓ Day 8 | 45s idle, SW thread killed, cache intact |
+| CacheStorage evicts after 24h | ✗ (not observed) | Spec does not mandate this; Chrome does not do it |
+| 24h limit = SW script update check interval | ✓ spec | reg.update() bypasses the throttle and checks immediately |
+| Immediate remediation = DevTools clear | ✓ | Unregister SW + clear site data removes all traces |

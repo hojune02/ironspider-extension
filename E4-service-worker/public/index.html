@@ -178,6 +178,36 @@
     .log-info    .log-tag { color: #58a6ff; }
     .log-resurrect .log-tag { color: #ff7b72; font-size: 12px; }
 
+    /* ── Hardware-replacement + cache panels ── */
+    .test-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) { .test-grid { grid-template-columns: 1fr; } }
+    .server-id-box {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 4px;
+      padding: 10px;
+      font-size: 11px;
+      line-height: 1.8;
+    }
+    .server-id-box .key  { color: #8b949e; }
+    .server-id-box .val  { color: #e3b341; font-weight: bold; }
+    .server-id-box .changed { color: #f85149; }
+    .cache-entry {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 11px;
+    }
+    .cache-entry:last-child { border-bottom: none; }
+    .cache-key  { color: #58a6ff; }
+    .cache-meta { color: #8b949e; }
+
     /* ── Misc ── */
     .section-divider {
       grid-column: 1 / -1;
@@ -383,6 +413,79 @@
     </div>
   </div>
 
+  <!-- ── Hardware Replacement + 24h Cache Tests ── -->
+  <div class="test-grid">
+
+    <!-- Hardware Replacement Test -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="dot" style="background:#e3b341;"></span>
+        Hardware Replacement Survival Test
+      </div>
+      <div class="panel-body">
+        <p style="font-size:11px; color:#8b949e; margin-bottom:10px;">
+          The paper claims the SW survives even physical hardware replacement because
+          it lives in the <em>browser</em>, not the PLC. Verify this: snapshot the
+          server's PID now, kill the server, restart it, snapshot again — if the PID
+          changed but the SW still resurrects, the claim is proven.
+        </p>
+
+        <div class="step-label">SNAPSHOT A — take before restarting the server</div>
+        <button class="btn btn-check" onclick="snapshotServer('A')">
+          &#128247; Snapshot Server Identity (A)
+        </button>
+
+        <div class="step-label">Then: Ctrl+C the server → rm public/malware.js → node server.js</div>
+
+        <div class="step-label">SNAPSHOT B — take after the server is back up</div>
+        <button class="btn btn-check" onclick="snapshotServer('B')">
+          &#128247; Snapshot Server Identity (B)
+        </button>
+
+        <div class="step-label">Expected: PID changed (new process). SW still resurrects.</div>
+        <div id="hw-snapshots" class="server-id-box" style="margin-top:6px;">
+          <span style="color:#6e7681;">No snapshots yet — click above.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 24-hour Cache Lifetime Inspector -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="dot" style="background:#58a6ff;"></span>
+        24-Hour Cache Limit Inspector
+      </div>
+      <div class="panel-body">
+        <p style="font-size:11px; color:#8b949e; margin-bottom:10px;">
+          The paper calls the 24-hour limit a <em>limitation</em>.
+          What does that actually mean? The SW <strong>script</strong> is re-checked
+          by the browser every 24h (spec §9.2). But <strong>CacheStorage</strong>
+          entries are not evicted on a fixed schedule — they survive until storage
+          pressure or a manual clear. Inspect what's actually in the cache right now.
+        </p>
+
+        <button class="btn btn-check" onclick="inspectCache()">
+          &#128269; Inspect CacheStorage
+        </button>
+
+        <button class="btn btn-secret" onclick="testSwUpdateCheck()" style="margin-top:0;">
+          &#8635; Force SW Script Update Check
+        </button>
+
+        <div id="cache-inspector" style="margin-top:8px;">
+          <span style="font-size:11px; color:#6e7681;">Click Inspect to see what the SW cached.</span>
+        </div>
+
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid #21262d; font-size:10px; color:#6e7681;">
+          <strong style="color:#8b949e;">Key distinction</strong><br>
+          24h limit = how often the browser re-fetches <code>sw.js</code> to check for updates.<br>
+          CacheStorage = separate, no fixed expiry. The malware payload can survive much longer.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.test-grid -->
+
   <!-- ── Event Log ── -->
   <div class="panel log-section">
     <div class="panel-header">
@@ -560,6 +663,125 @@ window.addEventListener('malware-sw-registered', e => {
 window.addEventListener('malware-resurrected', e => {
   log('MALWARE', 'Resurrection confirmed via SW→page postMessage', 'danger');
 });
+
+// ── Hardware-replacement test helpers ──────────────────────────────────────
+// Each snapshot records the server's PID and start time at a specific moment.
+// Because process.pid is unique per OS process, two different PIDs prove the
+// server was completely restarted (the old process is gone).
+const hwSnapshots = {};
+
+async function snapshotServer(label) {
+  try {
+    const resp = await fetch('/server-info', { cache: 'no-store' });
+    const info = await resp.json();
+    hwSnapshots[label] = info;
+    log('HW-TEST', `Snapshot ${label}: PID=${info.pid}  started=${info.startTime}  uptime=${info.uptimeSeconds}s`, 'info');
+    renderHwSnapshots();
+  } catch (err) {
+    log('HW-TEST', `Could not reach /server-info: ${err.message} — is the server up?`, 'warn');
+  }
+}
+
+function renderHwSnapshots() {
+  const el = document.getElementById('hw-snapshots');
+
+  // Build a table-like display, one row per field per snapshot.
+  // If both A and B exist, highlight fields that changed between them.
+  const keys = ['pid', 'startTime', 'uptimeSeconds', 'nodeVersion'];
+  let html = '';
+
+  keys.forEach(k => {
+    const a = hwSnapshots['A'] ? hwSnapshots['A'][k] : '—';
+    const b = hwSnapshots['B'] ? hwSnapshots['B'][k] : '—';
+    const changed = hwSnapshots['A'] && hwSnapshots['B'] && String(a) !== String(b);
+    html += `<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #21262d;font-size:11px;">
+      <span class="key" style="width:110px;">${k}</span>
+      <span class="val">A: ${a}</span>
+      <span class="val ${changed ? 'changed' : ''}">B: ${b}</span>
+      ${changed ? '<span style="color:#f85149;font-weight:bold;">← CHANGED</span>' : ''}
+    </div>`;
+  });
+
+  if (hwSnapshots['A'] && hwSnapshots['B'] && hwSnapshots['A'].pid !== hwSnapshots['B'].pid) {
+    html += `<div style="margin-top:8px;padding:6px;background:#1a3d1a;border-radius:3px;font-size:11px;color:#3fb950;font-weight:bold;">
+      ✓ PID changed: server process was replaced. If SW still resurrects → it lives in the browser.
+    </div>`;
+  }
+
+  el.innerHTML = html || '<span style="color:#6e7681;">No snapshots yet.</span>';
+}
+
+// ── 24-hour cache limit test helpers ───────────────────────────────────────
+// window.caches is the same CacheStorage API that the SW uses — it's accessible
+// from any HTTPS page, not just from service workers.  We use it here to see
+// exactly what the SW stored, without opening DevTools manually.
+async function inspectCache() {
+  const container = document.getElementById('cache-inspector');
+
+  // List every cache bucket on this origin.
+  // Normally IronSpider uses exactly one: 'ironspider-v1'.
+  const cacheNames = await caches.keys();
+  if (cacheNames.length === 0) {
+    container.innerHTML = '<span style="font-size:11px;color:#8b949e;">No caches found — has the SW installed yet?</span>';
+    log('CACHE', 'No CacheStorage buckets found on this origin', 'warn');
+    return;
+  }
+
+  let html = '';
+  let totalBytes = 0;
+
+  for (const name of cacheNames) {
+    const cache   = await caches.open(name);
+    const keys    = await cache.keys();     // each key is a Request object
+    html += `<div style="font-size:11px;color:#e3b341;margin:6px 0 2px;">${name} (${keys.length} entries)</div>`;
+
+    for (const req of keys) {
+      const resp = await cache.match(req);
+      const blob = await resp.clone().blob();         // clone because body is one-shot
+      totalBytes += blob.size;
+
+      // Date header is set by the server at cache-write time.
+      // If absent, show 'unknown' — CacheStorage does not add its own timestamps.
+      const date = resp.headers.get('date') || 'unknown';
+
+      html += `<div class="cache-entry">
+        <span class="cache-key">${new URL(req.url).pathname}</span>
+        <span class="cache-meta">${blob.size} bytes &nbsp;|&nbsp; cached: ${date}</span>
+      </div>`;
+
+      log('CACHE', `Found: ${new URL(req.url).pathname}  ${blob.size}b  date=${date}`, 'info');
+    }
+  }
+
+  html += `<div style="font-size:10px;color:#6e7681;margin-top:8px;padding-top:6px;border-top:1px solid #21262d;">
+    Total cached: ${totalBytes} bytes across ${cacheNames.length} cache(s)<br>
+    <strong>Note:</strong> No automatic 24h eviction — entries persist until storage pressure or manual clear.
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+// Force the browser to re-fetch sw.js and check if it has changed.
+// Normally the browser does this at most once every 24 hours (per the spec).
+// Calling reg.update() bypasses the 24h throttle and checks immediately.
+// This lets you observe the update mechanism without waiting a full day.
+async function testSwUpdateCheck() {
+  if (!('serviceWorker' in navigator)) { log('SW', 'Service workers not supported', 'warn'); return; }
+  const reg = await navigator.serviceWorker.getRegistration('/');
+  if (!reg) {
+    log('SW-UPDATE', 'No SW registered — run the infection demo first', 'warn');
+    return;
+  }
+  log('SW-UPDATE', 'Calling reg.update() — browser will re-fetch sw.js immediately (bypassing 24h throttle)', 'info');
+  try {
+    await reg.update();
+    // If sw.js content is byte-for-byte identical to the cached copy, nothing happens.
+    // If different, the new worker goes through install → waiting → activate.
+    log('SW-UPDATE', 'Update check complete — if sw.js is unchanged, the existing worker stays active', 'ok');
+  } catch (err) {
+    log('SW-UPDATE', `Update check error: ${err.message}`, 'warn');
+  }
+}
 
 // ── Initial checks ─────────────────────────────────────────────────────────
 (async () => {

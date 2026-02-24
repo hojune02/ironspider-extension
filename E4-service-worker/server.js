@@ -21,6 +21,10 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const CERT_KEY   = path.join(__dirname, 'certs', 'localhost-key.pem');
 const CERT_CRT   = path.join(__dirname, 'certs', 'localhost.pem');
 
+// Recorded at startup — /server-info returns this so the browser can prove
+// it is talking to a fresh process after a simulated hardware replacement.
+const SERVER_START_TIME = new Date();
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js':   'text/javascript; charset=utf-8',
@@ -81,6 +85,27 @@ function handleRequest(req, res) {
         res.end(JSON.stringify({ ok: false, error: err.message }));
       }
     });
+    return;
+  }
+
+  // ── GET /server-info — hardware-replacement test helper ──────────────────
+  // Returns the process PID and the exact moment this server instance started.
+  // Purpose: after you kill `node server.js` and restart it, the PID and
+  // startTime both change.  The browser page can call this endpoint before
+  // and after the restart to prove it is now talking to a completely fresh
+  // server process — i.e. a "new PLC" with no knowledge of the old session.
+  // If the service worker still functions after that restart, it proves the
+  // SW lives in the *browser*, not in the server.
+  if (req.method === 'GET' && req.url.startsWith('/server-info')) {
+    const info = {
+      pid:         process.pid,
+      startTime:   SERVER_START_TIME.toISOString(),
+      uptimeSeconds: Math.round(process.uptime()),
+      nodeVersion: process.version,
+    };
+    log(req.method, req.url, `pid=${process.pid} uptime=${info.uptimeSeconds}s`);
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(info));
     return;
   }
 
