@@ -841,3 +841,71 @@ No experimental progress due to other project obligations
 
 No experimental progress due to other project obligations
 
+## Day 12 - Mar 1, 2026
+
+Today was for verifying whether the simulated malware payload injected onto OpenPLC web server has the following capabilities:
+
+- Sensor reading spoofing
+- Alarm suppression
+- Actuator manipulation
+
+### Sensor reading spoofing
+
+The water level controlled by `water_pump.st` has the range of 0 to 100. The malware was configured to display "1337" as the reading for the water level, displaying its capability of sensor reading spoofing. 
+
+This was possible since the `ironspiderSpoof` function wrapped the response from the `GET /monitor-update?mb_port=502` request, accessed its DOM structure, and changed it before displaying it to the human operator.
+
+![alt text](image-15.png)
+
+It can be seen from the attached screenshot that the water level is '1337', when the actual reading stored in the browser's localStorage (`is_real_water_level`) indicates 50.
+
+### Alarm suppression
+
+To test alarm supression, the default water level defined in `water_pump.st` was set to 81, which is just above the threshold for alarm activation:
+```st
+PROGRAM water_pump
+  VAR
+    water_level AT %IW0 : INT := 80;      
+    pump_running AT %QX0.0 : BOOL := FALSE; 
+    alarm_active AT %QX0.1 : BOOL := FALSE; 
+  END_VAR
+  
+  VAR
+    setpoint_high : INT := 81;
+    setpoint_low : INT := 20;
+    alarm_threshold : INT := 95
+    ...
+```
+The sensor spoofing capability was disabled to display the correct water level on the OpenPLC web UI:
+```javascript
+...
+                // Capability 1: Sensor spoofing.
+                // Read the real water level, record it, display 50 instead.
+                if (varName === 'water_level') {
+                    var pTag = cells[4].querySelector('p');
+                    if (pTag) {
+                        var realValue = parseInt(pTag.textContent.trim());
+                        localStorage.setItem('is_real_water_level', realValue);
+                        localStorage.setItem('is_spoof_timestamp', Date.now());
+                        // pTag.textContent = '1337';
+                        var bar = cells[4].querySelector('.w3-blue');
+                        if (bar) bar.style.width = '50%';
+                        ...
+```
+![alt text](image-16.png)
+It can be seen from the attached screenshot that even though the water level is at 80, alarm is not activated. `pump_running` is set to false, as the pump was implemented to stop working if water level exceeds the threshold.
+
+### Actuator manipulation
+
+
+Recall that when the water level is above 80, `pump_running` should be false to prevent it from rising further. The injected malware sends out a GET request to`/point-write?value=1&address=%QX0.0`, thereby **directly changing the boolean value stored at `pump_running` to true**. 
+
+![alt text](image-17.png)
+
+It can be seen that `pump_running` is set to true despite the water level being above 80. Note that `pump_running` is displayed to be true because the web API (`GET /point-write?...`) called by the malware changed the underlying value stored in the PLC program.
+
+Also, it should be noted that intermittent toggling of `pump_running` between `true` and `false` was observed during this experiment, rather than sustained override on OpenPLC. This is because `water_pump.st`'s correct output for `pump_running` (false in this case) is sent to OpenPLC every 500ms; this is defined in line 34 of the `water_pump.st` file
+
+Actuator manipulation is an attack on the Modbus layer, and this can be complemented with sensor spoofing attack to activate the pump stealthily without detection. The malware can set `pump_running` to false, while it manipulates the actual value to be true on the PLC program.
+
+

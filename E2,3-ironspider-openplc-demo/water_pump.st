@@ -1,6 +1,6 @@
 PROGRAM water_pump
   VAR
-    water_level AT %IW0 : INT := 50;      
+    water_level AT %IW0 : INT := 81;      
     pump_running AT %QX0.0 : BOOL := FALSE; 
     alarm_active AT %QX0.1 : BOOL := FALSE; 
   END_VAR
@@ -31,7 +31,7 @@ END_PROGRAM
 
 CONFIGURATION Config0
   RESOURCE Res0 ON PLC
-    TASK Main(INTERVAL := T#50ms,PRIORITY := 0);
+    TASK Main(INTERVAL := T#500ms,PRIORITY := 0);
     PROGRAM Inst0 WITH Main : water_pump;
   END_RESOURCE
 END_CONFIGURATION
