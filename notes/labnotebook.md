@@ -908,4 +908,14 @@ Also, it should be noted that intermittent toggling of `pump_running` between `t
 
 Actuator manipulation is an attack on the Modbus layer, and this can be complemented with sensor spoofing attack to activate the pump stealthily without detection. The malware can set `pump_running` to false, while it manipulates the actual value to be true on the PLC program.
 
+## Day 13 - Mar 2, 2026
+
+Starting from today, the project aims to come up with a detection mechanism for WB PLC malware, which was considered to be an "open problem" by the original literature. 
+
+On WAGO, CVE-2022-45140 places malware files in `/home/codesys_root/PlcLogic/visu/`, which the WAGO web server exposes at the origin root (`http://<plc>/malware.js`). This allows the service worker at resurrect.js to claim scope / and intercept all page fetches. On OpenPLC, Flask's static folder is the structural equivalent — files placed there are served automatically without server code changes, at /static/. This confines the SW scope to /static/, meaning SW resurrection applies to resources fetched under that path, not the full origin. This is an OpenPLC-specific adaptation, not a flaw in the attack model.
+
+The key feature of WB PLC malware is that it uses Service Worker to resurrect itself. SW does this by repeatedly checking whether the response from a`GET /malware.js` request confirms the presence of the malware inside the PLC memory. 
+
+The current implementation of the detector, `ironspider_detector.py` inside `OpenPLC_v3/webserver`, checks if the number of `no-cache` fetches for the malware during the given time window exceeds the threshold value. If it exceeds the threshold, the detector triggers the alarm that there may be a malware present in the server, and a Service Worker that strives to ensure its presence. 
+
 

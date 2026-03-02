@@ -2774,8 +2774,7 @@ def run_http():
                 monitor.parse_st(openplc_runtime.project_file)
 
             try:
-                ssl_context = ('localhost+1.pem', 'localhost+1-key.pem')
-                app.run(debug=False, host='0.0.0.0', threaded=True, port=8080, ssl_context=ssl_context)
+                app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
             except KeyboardInterrupt as e:
                 print(f"Exiting OpenPLC Webserver...{e}")
                 openplc_runtime.stop_runtime()
