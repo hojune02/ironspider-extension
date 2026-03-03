@@ -916,6 +916,16 @@ On WAGO, CVE-2022-45140 places malware files in `/home/codesys_root/PlcLogic/vis
 
 The key feature of WB PLC malware is that it uses Service Worker to resurrect itself. SW does this by repeatedly checking whether the response from a`GET /malware.js` request confirms the presence of the malware inside the PLC memory. 
 
-The current implementation of the detector, `ironspider_detector.py` inside `OpenPLC_v3/webserver`, checks if the number of `no-cache` fetches for the malware during the given time window exceeds the threshold value. If it exceeds the threshold, the detector triggers the alarm that there may be a malware present in the server, and a Service Worker that strives to ensure its presence. 
+The current implementation of the detector, `ironspider_detector.py` inside `OpenPLC_v3/webserver`, checks if the number of fetches for the malware during the given time window exceeds the threshold value. If it exceeds the threshold, the detector triggers an alert that there may be a malware present in the server, and a Service Worker that tries to make sure that the malware is present. 
 
+## Day 14 - Mar 3, 2026
+
+It should be noted that the detector was made based on how `sw.js` works on a Chromium-based browser (Brave). The detector may not successfully detect WB PLC malware in other browsers.
+
+On Brave,`Sec-Fetch-Dest` was set to be `empty` for a fetch request. Also, the `Referer` value is set to the Service Worker Javascript file, which ends with `.js`. So, the detector was set to alert the operator when it detects the following two from a fetch request:
+
+- `Sec-Fetch-Dest: empty`
+- `Referer: https://...../[SW].js`
+
+![alt text](image-18.png)
 

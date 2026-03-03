@@ -14,13 +14,17 @@ proposed in Table VII.
 Three detection tiers (increasing false-positive risk):
 
   TIER 1 — Deterministic (0 false positives on any known PLC firmware)
-    Repeated no-cache GET requests to the malware payload URL. A legitimate
-    browser page load produces at most 1 GET per navigation. The IronSpider
-    service worker fires a cache-busted GET to /static/malware.js every 30 s
-    (the "Check Existence" polling loop, Fig. 4, Zonouz et al. NDSS 2024).
-    Three or more such requests within 90 seconds is definitively non-human:
-    no clean PLC firmware or browser behavior produces repeated re-fetches of
-    the same JS file at machine-speed intervals.
+    Two signals must both be present on a GET request:
+      Sec-Fetch-Dest: empty  — the browser sets this for all programmatic
+        fetch() API calls. Page <script src> loads send Sec-Fetch-Dest: script.
+        Note: Chrome/Brave do NOT add Cache-Control for fetch({cache:'no-store'})
+        — the cache mode is handled internally without a request header.
+      Referer ends with .js  — SW fetch() calls carry the SW script URL as
+        Referer (e.g. /static/sw.js). Regular page fetch() carries the page
+        URL (e.g. /monitoring), which does not end in .js.
+    3+ requests matching both signals within 90 s confirms automated polling
+    from a JS file context (Service Worker). Filename-agnostic: detects
+    malware under any name, not just malware.js.
 
   TIER 2 — Statistical (near-zero false positives)
     Write calls to the actuator API faster than a human can operate. The
@@ -49,13 +53,11 @@ from datetime import datetime
 
 class IronSpiderDetector:
 
-    # Tier 1: flag if malware URL is fetched this many times within the window.
-    # Normal browser: 1 GET per page navigation (cached thereafter).
-    # IronSpider SW: 1 GET every 30 s with cache: 'no-store'.
-    # Three requests in 90 s means at least two came from the SW poll loop.
+    # Tier 1: flag when Sec-Fetch-Dest: empty + Referer-ends-.js requests
+    # accumulate past this threshold. Both signals together identify a SW fetch()
+    # loop — page <script> loads and page-originated fetch() calls don't match.
     MALWARE_CHECK_THRESHOLD = 3      # requests
     MALWARE_CHECK_WINDOW    = 90.0   # seconds
-    MALWARE_URL_PATTERN     = '/static/malware.js'
 
     # Tier 2: flag if write rate exceeds this over the measurement window
     WRITE_RATE_THRESHOLD = 2.0   # writes/sec  (human max ≈ 0.5/sec)
@@ -67,9 +69,9 @@ class IronSpiderDetector:
     def __init__(self):
         self.alerts = []
         self._lock = threading.Lock()
-        # Sliding window of timestamps for GET requests to the malware URL
+        # Sliding window of timestamps for Tier 1 matching requests
         self._malware_check_times = collections.deque()
-        # Deduplicate Tier 1 alert (only fire once — polling is ongoing)
+        # Deduplicate Tier 1 alert (only fire once per session)
         self._sw_polling_alerted = False
         # Sliding window of timestamp for each /point-write call
         self._write_times = collections.deque()
@@ -83,22 +85,21 @@ class IronSpiderDetector:
         now = time.time()
 
         # --- TIER 1: SW existence-check polling -----------------------
-        # The IronSpider SW polls GET /static/malware.js with cache:'no-store'
-        # every 30 s (sw.js activate handler, setInterval 30000ms).
-        # This is the "Check Existence" loop in Figure 4 of the paper.
-        #
-        # Normal browser behavior: the JS file is fetched once per page load,
-        # then served from the HTTP cache on subsequent navigations. A page
-        # never re-requests the same <script src> within the same session.
-        #
-        # Detection signal: 3+ GETs to the malware URL within 90 s.
-        # The first GET is the legitimate page-load fetch. The second and
-        # third are the SW's periodic no-cache polls — two SW polls 30 s apart
-        # plus the initial load hits the threshold after ≈60 s of SW activity.
-        #
-        # No clean PLC firmware produces repeated machine-speed re-fetches of
-        # a static JS file — this pattern is unique to the SW poll loop.
-        if method == 'GET' and self.MALWARE_URL_PATTERN in path and not self._sw_polling_alerted:
+        # Two signals together identify a Service Worker fetch() polling loop:
+        #   Sec-Fetch-Dest: empty  → request came from fetch() API, not a
+        #                            <script src> tag (which sends 'script')
+        #   Referer ends with .js  → fetch originated from a JS file (e.g. SW
+        #                            at /static/sw.js), not from a page URL
+        # Chrome/Brave do NOT add Cache-Control for fetch({cache:'no-store'}) —
+        # Sec-Fetch-Dest is the correct discriminator instead.
+        referer = headers.get('Referer', '')
+        is_sw_fetch = (
+            method == 'GET'
+            and headers.get('Sec-Fetch-Dest') == 'empty'
+            and referer.endswith('.js')
+        )
+        print(referer, is_sw_fetch)
+        if is_sw_fetch and not self._sw_polling_alerted:
             with self._lock:
                 self._malware_check_times.append(now)
                 cutoff = now - self.MALWARE_CHECK_WINDOW
@@ -110,13 +111,12 @@ class IronSpiderDetector:
                 self._alert(
                     rule='TIER1_SW_POLLING',
                     message=(
-                        f'GET {path} received {count} times within '
-                        f'{self.MALWARE_CHECK_WINDOW:.0f} s from {remote_addr} '
-                        f'(threshold: {self.MALWARE_CHECK_THRESHOLD}). '
-                        'Repeated no-cache fetches of a static JS file are '
-                        'inconsistent with any browser or human behavior. '
-                        'This matches the IronSpider service worker '
-                        '"Check Existence" polling loop '
+                        f'fetch() from JS context ({referer}) to {path} '
+                        f'detected {count} times within {self.MALWARE_CHECK_WINDOW:.0f} s '
+                        f'from {remote_addr} (threshold: {self.MALWARE_CHECK_THRESHOLD}). '
+                        'Sec-Fetch-Dest: empty confirms fetch() API call (not <script> tag). '
+                        'Referer ending in .js confirms origin from a JS file (Service Worker). '
+                        'Matches the IronSpider SW existence-check polling loop '
                         '(Fig. 4, Zonouz et al. NDSS 2024).'
                     ),
                     severity='CRITICAL'
