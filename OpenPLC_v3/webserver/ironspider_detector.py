@@ -56,8 +56,9 @@ class IronSpiderDetector:
     # Tier 1: flag when Sec-Fetch-Dest: empty + Referer-ends-.js requests
     # accumulate past this threshold. Both signals together identify a SW fetch()
     # loop — page <script> loads and page-originated fetch() calls don't match.
-    MALWARE_CHECK_THRESHOLD = 3      # requests
-    MALWARE_CHECK_WINDOW    = 90.0   # seconds
+    MALWARE_CHECK_THRESHOLD      = 3      # requests within window to trigger
+    MALWARE_CHECK_WINDOW         = 90.0   # seconds
+    MALWARE_CHECK_ALERT_INTERVAL = 90.0   # seconds between repeated alerts
 
     # Tier 2: flag if write rate exceeds this over the measurement window
     WRITE_RATE_THRESHOLD = 2.0   # writes/sec  (human max ≈ 0.5/sec)
@@ -71,8 +72,8 @@ class IronSpiderDetector:
         self._lock = threading.Lock()
         # Sliding window of timestamps for Tier 1 matching requests
         self._malware_check_times = collections.deque()
-        # Deduplicate Tier 1 alert (only fire once per session)
-        self._sw_polling_alerted = False
+        # Timestamp of last Tier 1 alert (None = never fired)
+        self._last_sw_polling_alert = None
         # Sliding window of timestamp for each /point-write call
         self._write_times = collections.deque()
         # Timestamp of most recent /monitor-update
@@ -98,16 +99,19 @@ class IronSpiderDetector:
             and headers.get('Sec-Fetch-Dest') == 'empty'
             and referer.endswith('.js')
         )
-        print(referer, is_sw_fetch)
-        if is_sw_fetch and not self._sw_polling_alerted:
+        if is_sw_fetch:
             with self._lock:
                 self._malware_check_times.append(now)
                 cutoff = now - self.MALWARE_CHECK_WINDOW
                 while self._malware_check_times and self._malware_check_times[0] < cutoff:
                     self._malware_check_times.popleft()
                 count = len(self._malware_check_times)
-            if count >= self.MALWARE_CHECK_THRESHOLD:
-                self._sw_polling_alerted = True
+                last_alert = self._last_sw_polling_alert
+            cooldown_elapsed = (last_alert is None or
+                                (now - last_alert) >= self.MALWARE_CHECK_ALERT_INTERVAL)
+            if count >= self.MALWARE_CHECK_THRESHOLD and cooldown_elapsed:
+                with self._lock:
+                    self._last_sw_polling_alert = now
                 self._alert(
                     rule='TIER1_SW_POLLING',
                     message=(
