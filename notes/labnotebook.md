@@ -933,3 +933,10 @@ On Brave,`Sec-Fetch-Dest` was set to be `empty` for a fetch request. Also, the `
 
 No experimental progress due to other project obligation
 
+## Day 16 - Mar 5, 2026
+
+Keywords: Sec-Fetch-Dest, fetched resource where?, script, empty, Referer, request initiator 
+
+`Sec-Fetch-Dest` is a part of the browser-generated HTTP request header which specifies *where* the fetched file will be used for. It can be set to `script`, when the fetched file is a JS file used in a web page's HTML. It can also be set to `empty`, when the fetched file has no specified destination. `empty` indicates that the request is a `fetch` request.
+
+`Referer` header indicates the document which initiated the request in question. If `malware.js` is loaded by a OpenPLC page (e.g. `/monitoring`), the value for this header does not end with `.js`. On the other hand, when the Service Worker sends out a `fetch` request, the value for `Referer` ends with `.js`. 
