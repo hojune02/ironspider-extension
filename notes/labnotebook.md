@@ -642,7 +642,9 @@ After a restart the PID changes, which the browser can detect.
   page made its next fetch), detects the 404 for the now-absent malware.js, and re-uploads it.
 - Server log shows: `POST /upload *** RESURRECTION: wrote malware.js (NNNN bytes)`
 
-**Actual result (observed):** *[fill in after running]*
+![alt text](image-28.png)
+**Actual result (observed):** The PID changed from A: 3725031
+to B: 3728686, but the SW persisted. This indicates that the SW is registered and activated on the browser.
 
 **Why this works:** The SW registration is stored in the browser's IndexedDB-backed internal
 storage, not in any server-side file.  Killing the server process and restarting it does not
@@ -699,8 +701,9 @@ deploys a *patched* sw.js that removes the resurrection logic, the browser may k
 8. **Click "Inspect CacheStorage"** on the new tab to confirm the `ironspider-v1` bucket still
    exists with the malware.js entry intact.
 
+![alt text](image-30.png)
 **Observed:** CacheStorage entry survived idle termination.  SW thread was restarted by the new
-tab navigation.  *[fill in actual timestamps and cache size from inspector panel]*
+tab navigation.  
 
 **(b) SW script update check (the actual 24h mechanism)**
 1. Click **Force SW Script Update Check** on the dashboard.
@@ -712,7 +715,8 @@ tab navigation.  *[fill in actual timestamps and cache size from inspector panel
 4. Modify `public/sw.js` (add/remove a comment), save, then click the button again.
    Observe the new worker installing in DevTools → Application → Service Workers.
 
-**Observed:** *[fill in after running]*
+![alt text](image-29.png)
+**Observed:** After adding a comment (`//hello`) to `sw.js` and clicking `Force SW Script Update Check`, the browser fetched the new SW and registered it. From the screenshot, it can be seen that the count went from #0 to #1.
 
 **(c) What actually evicts the CacheStorage entry?**
 - **Manual clear:** DevTools → Application → Storage → Clear site data. Confirmed: SW
@@ -940,3 +944,61 @@ Keywords: Sec-Fetch-Dest, fetched resource where?, script, empty, Referer, reque
 `Sec-Fetch-Dest` is a part of the browser-generated HTTP request header which specifies *where* the fetched file will be used for. It can be set to `script`, when the fetched file is a JS file used in a web page's HTML. It can also be set to `empty`, when the fetched file has no specified destination. `empty` indicates that the request is a `fetch` request.
 
 `Referer` header indicates the document which initiated the request in question. If `malware.js` is loaded by a OpenPLC page (e.g. `/monitoring`), the value for this header does not end with `.js`. On the other hand, when the Service Worker sends out a `fetch` request, the value for `Referer` ends with `.js`. 
+
+## Day 17, 18
+
+## Day 19 - Mar 8, 2026
+
+### 3 evasion tests against IronSpider detector
+
+![alt text](image-19.png)
+
+![alt text](image-20.png)
+
+The first evasion technique was to change the name of Service Worker from `sw.js` to `resurrect.js`. Since the detector detects any fetch request made by `.js` file and does not look for a specific name of SW, it successfully detected the anomaly despite the name change. 
+![alt text](image-21.png)
+![alt text](image-22.png)
+The second evasion technique was to slow down the polling interval of the SW from 30s to 90s. This was shown to succesfully evade the detector, since the detector is looking for 3 requests within a 90s interval; the modified SW only makes one request every 90 seconds.
+
+However, this evasion can be trivially detected by changing the detector logic slightly: if the detector sees any fetch request for a `.js file` from a `.js` file, the detector can flag this as possible malware.
+
+![alt text](image-23.png)
+The third evasion technique was to suppress the Referer header, so that the document which initiated the fetch request is not seen in the browser-generated header. This was done by adding the`referrerPolicy: "no-referrer"` key-value pair to the fetch request made by `sw.js`.
+
+![alt text](image-24.png)
+
+The detector failed to acknowledge the presence of SW when `referrerPolicy: "no-referrer"`. This was expected since the core logic behind detection requires the information about which document initiated the fetch request for a `.js` file.
+
+### False Positive Test
+
+Now, the detector was activated for 5 minutes without `malware.js` and `sw.js` active in the OpenPLC system. This is achieved by temporarily deleting the programs, and commenting out the 'malware injection' and 'ironspiderSpoof` part from `pages.py`:
+```javascript
+....
+   <!-- IronSpider payload — manual injection simulating CVE-2022-45140 on WAGO.
+         Files live in static/ (the PLC's file system). Served at /static/ because
+         Flask's static folder is OpenPLC's equivalent of WAGO's writable visu dir.
+         Scope limitation: SW controls /static/ only, not /monitoring.
+         Documented in lab notebook as an OpenPLC-specific adaptation.
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js', {scope: '/static/'})
+                .then(function(reg) { console.log('[IS] SW registered, scope:', reg.scope); })
+                .catch(function(err) { console.warn('[IS] SW registration failed:', err); });
+        }
+    </script>
+    <script src="/static/malware.js"></script>
+    -->"""
+....
+// mon_table.innerHTML = ironspiderSpoof(req.responseText);
+
+                    mon_table.innerHTML = req.responseText;
+...
+```
+![alt text](image-25.png)
+![alt text](image-26.png)
+![alt text](image-27.png)
+
+There was no false positive detected, suggesting that the detection logic of finding fetch requests with `.js` referrer only flags the requests from the malicious SW.
+
+
+

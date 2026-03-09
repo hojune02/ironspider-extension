@@ -24,6 +24,7 @@
 'use strict';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
+//hello
 const CACHE_NAME     = 'ironspider-v1';  // name of this SW's CacheStorage bucket
 const MALWARE_PATH   = '/malware.js';    // server path the SW watches and caches
 const SW_PATH = '/sw.js';

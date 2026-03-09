@@ -831,7 +831,8 @@ monitoring_head = """
          Files live in static/ (the PLC's file system). Served at /static/ because
          Flask's static folder is OpenPLC's equivalent of WAGO's writable visu dir.
          Scope limitation: SW controls /static/ only, not /monitoring.
-         Documented in lab notebook as an OpenPLC-specific adaptation. -->
+         Documented in lab notebook as an OpenPLC-specific adaptation.
+    -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/static/sw.js', {scope: '/static/'})
@@ -906,6 +907,8 @@ monitoring_tail = """
                 {
                     // [IronSpider Simulation] Route through spoof filter before DOM injection
                     mon_table.innerHTML = ironspiderSpoof(req.responseText);
+
+                    // mon_table.innerHTML = req.responseText;
 
                     //Start a new update timer
                     timeoutID = setTimeout('loadData()', refresh_rate);
