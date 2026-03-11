@@ -945,7 +945,53 @@ Keywords: Sec-Fetch-Dest, fetched resource where?, script, empty, Referer, reque
 
 `Referer` header indicates the document which initiated the request in question. If `malware.js` is loaded by a OpenPLC page (e.g. `/monitoring`), the value for this header does not end with `.js`. On the other hand, when the Service Worker sends out a `fetch` request, the value for `Referer` ends with `.js`. 
 
-## Day 17, 18
+## Days 17-18 — Mar 6-7, 2026
+
+### Detector iteration: from count-based to header-based
+
+The Tier 1 detector at this point counted all GET requests to `/static/malware.js`. This immediately produced a false positive: the monitoring page itself loads `malware.js` via `<script src="/static/malware.js">`, which generates one GET on every page load. With the threshold set to 3, a user refreshing the page twice would trigger an alert, even without any SW present.
+
+**Attempt 1 — Cache-Control: no-cache filter**
+
+The WHATWG Fetch spec (§HTTP-fetch) states that `cache: 'no-store'` causes the browser to append `Cache-Control: no-cache` to the outgoing request. A `<script src>` tag sends no Cache-Control header. Based on this, Tier 1 was changed to require `Cache-Control: no-cache` on the request before counting it:
+
+```python
+cache_ctrl = headers.get('Cache-Control', '')
+is_sw_fetch = 'no-cache' in cache_ctrl
+```
+
+The detector still did not fire. A debug print was added to every GET to `/static/malware.js` to inspect the actual incoming headers:
+
+```python
+print(f'[DEBUG-T1] Cache-Control={repr(headers.get("Cache-Control"))} all={dict(headers)}')
+```
+
+**Debug output:**
+```
+[DEBUG-T1] Cache-Control=None all={..., 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://localhost:8080/static/sw.js', ...}
+```
+
+`Cache-Control` is `None` — the header is completely absent. Brave/Chrome handle `cache: 'no-store'` internally (bypassing the HTTP cache at the engine level) without adding any `Cache-Control` header to the outgoing request. This contradicts the WHATWG spec text, but is the actual browser behavior. Both `no-cache` and `no-store` checks against the request header would always fail.
+
+**Attempt 2 — Sec-Fetch-Dest: empty + Referer.endswith('.js')**
+
+The debug output revealed the correct discriminating signals already present in the request:
+
+- `Sec-Fetch-Dest: empty` — the W3C Fetch Metadata spec requires browsers to set this for all `fetch()` API calls. A `<script src>` tag sends `Sec-Fetch-Dest: script` instead. This header cannot be forged by JavaScript (it is a forbidden header name).
+- `Referer: http://localhost:8080/static/sw.js` — SW-initiated `fetch()` calls carry the SW script URL as Referer. Page-originated `fetch()` calls (e.g. from `/monitoring`) carry the page URL, which does not end in `.js`.
+
+Tier 1 was rewritten to use both signals:
+
+```python
+referer = headers.get('Referer', '')
+is_sw_fetch = (
+    method == 'GET'
+    and headers.get('Sec-Fetch-Dest') == 'empty'
+    and referer.endswith('.js')
+)
+```
+
+This approach is also filename-agnostic: it detects any `.js` file being polled by a `.js` context, not just `malware.js`. This is the final Tier 1 design confirmed working in Day 19.
 
 ## Day 19 - Mar 8, 2026
 
