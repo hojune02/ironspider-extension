@@ -296,13 +296,6 @@ While testing for this capability, intermittent toggling of\texttt{pump\_running
 
 \subsection{Design Rationale for Tier~1}
 
-The paper identifies runtime behavioral detection as an ``open
-problem'' because IronSpider uses only legitimate browser APIs
-with no syntactically suspicious patterns.
-We observe that while the \emph{payload} is indistinguishable from
-benign JavaScript, the \emph{delivery mechanism} --- a Service Worker
-polling loop --- produces distinguishable HTTP request metadata.
-
 The paper leaves detection of IronSpider as an ``open problem'' since IronSpider uses only legitimate browser API with no suspicious patterns detected by JavaScript analysers. This study observed that while the \emph{payload} itself is indistinguishable from benign JavaScript, the \emph{SW polling loop} for the malware may produce distinguialbe HTTP request metadata useful for detection.
 
 This study focused on detecting SW-originated fetch using two browser-generated headers:
@@ -310,98 +303,58 @@ This study focused on detecting SW-originated fetch using two browser-generated 
 \begin{itemize}
   \item \textbf{\texttt{Sec-Fetch-Dest: empty}.} This header is set for all \texttt{fetch()} API calls according to the W3C Fetch Metadata specification, while a \texttt{<script src>} tag sets \texttt{Sec-Fetch-Dest: script} instead. JavaScript cannot forge or suppress this header.
 
-  \item \textbf{\texttt{Referer} ending in \texttt{.js}.}\texttt{fetch()} calls initiated by SW sets the SW script URL as Referer (e.g., \texttt{/static/sw.js} in OpenPLC's case). Page-originated \texttt{fetch()} calls has the page URL as the value for Referer (e.g., \texttt{/monitoring}), which does not end in \texttt{.js}.
+  \item \textbf{\texttt{Referer} ending in \texttt{.js}.} \texttt{fetch()} calls initiated by SW sets the SW script URL as Referer (e.g., \texttt{/static/sw.js} in OpenPLC's case). Page-originated \texttt{fetch()} calls has the page URL as the value for Referer (e.g., \texttt{/monitoring}), which does not end in \texttt{.js}.
 
 \end{itemize}
 
-Neither signal alone is sufficient: \texttt{Sec-Fetch-Dest: empty}
-also matches page-originated \texttt{fetch()} calls (e.g., AJAX
-polling in the monitoring page), and a \texttt{.js} Referer could
-theoretically appear in benign SW scenarios.
-The conjunction of both signals within a sliding window
-(3~requests in 90~seconds) identifies the characteristic SW
-polling loop.
+It was found that only having one of the signals inside the detector logic is not sufficient. \texttt{Sec-Fetch-Dest: empty} also matches page-originated \texttt{fetch()} calls, and a \texttt{.js} Referer could theoretically appear in benign SW scenarios. The combination of the two signals facilitates identifying the SW polling loop specific for the WB PLC malware.
 
 \subsubsection{Iterative Development}
 
-The final design was reached through two failed iterations:
+The final design for Tier~1 logic was devised after two failed attempts:
 
 \begin{enumerate}
-  \item \textbf{Count-based (rejected):} counting all GET requests
-        to \texttt{/static/malware.js} produced immediate false
-        positives because the monitoring page loads the file via
-        \texttt{<script src>}.
+  \item \textbf{Count-based (rejected):} This strived to count all GET requests to \texttt{/static/malware.js}. Not only did it has the name of the malware hardcoded in the detector, but also it falsely categorised the monitoring page's \texttt{<script src>} load as malicious.
 
-  \item \textbf{Cache-Control filter (rejected):} the WHATWG Fetch
-        specification states that \texttt{cache:~'no-store'} appends
-        \texttt{Cache-Control:~no-cache} to the request.
-        However, Chromium-based browsers (Chrome, Brave) do \emph{not}
-        send this header --- they handle the cache mode internally.
-        The \texttt{Cache-Control} header is completely absent from
-        SW \texttt{fetch()} requests on these browsers.
+  \item \textbf{Cache-Control filter (rejected):} Since the SW polls for the malware using \texttt{cache:~'no-store'}, the request was expected to have \texttt{Cache-Control:~no-cache} in its header. However, this was not included in the actual HTTP request. This is likely due to \texttt{sw.js} setting \texttt{cache:~'no-store'} instead of \texttt{'Cache-Control':~'no-store'}. The cache option controls browser caching behavior internally, not necessarily the HTTP headers.
 \end{enumerate}
 
 A debug header dump revealed \texttt{Sec-Fetch-Dest} and
-\texttt{Referer} as the correct discriminators, leading to the
-final design.
+\texttt{Referer} as the possible discriminators, leading to the final design of Tier~1.
 
 \subsection{False Positive Evaluation}
 
-We disabled the malware injection (commented out the payload block
-in \texttt{pages.py}) and removed \texttt{malware.js} and
-\texttt{sw.js} from the server.
-The detector ran for five minutes of normal operator interaction
-(page loads, monitoring refreshes, manual point writes).
-\textbf{Zero Tier~1 alerts} were generated.
-
-Normal browser requests to OpenPLC produce
-\texttt{Sec-Fetch-Dest: document} (page loads),
-\texttt{Sec-Fetch-Dest: script} (\texttt{<script src>} loads),
-or \texttt{Sec-Fetch-Dest: empty} with a non-\texttt{.js} Referer
-(AJAX polling from the monitoring page).
-None of these combinations match the Tier~1 conjunction.
+The malware injection was disabled (commented out the relevant malware blocks in \texttt{pages.py}), and removed both \texttt{malware.js} and \texttt{sw.js} from the server. The detector ran for 5 minutes with normal ongoing operations such as monitoring refreshes, manual point writes. This resulted in \textbf{Zero Tier~1 alerts} generated.
 
 \subsection{Evasion Evaluation}
 
-We tested three evasion techniques against the Tier~1 detector:
+Three evasion techniques were utilised against the Tier~1 detection logic:
 
 \begin{table}[ht]
 \centering
-\caption{Evasion techniques against the Tier~1 detector.}
+\caption{Evasion techniques against the Tier~1 detection.}
 \label{tab:evasion}
 \small
 \begin{tabular}{@{}lp{3.2cm}c@{}}
 \toprule
-\textbf{Evasion} & \textbf{Technique} & \textbf{Det.?} \\
+\textbf{Evasion} & \textbf{Technique} & \textbf{Detected?} \\
 \midrule
-SW rename        & Rename to \texttt{resurrect.js} & Yes \\
+Renaming SW        & Rename \texttt{sw.js} to \texttt{resurrect.js} & Yes \\
 Slow polling     & Interval $\to$ 90\,s & No \\
 Referer suppress & \texttt{no-referrer} policy & No \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{E1 (SW rename):} The detector is filename-agnostic ---
-it checks whether any \texttt{Referer} ends in \texttt{.js},
-not a specific filename.
-The alert fired correctly after renaming.
+\textbf{E1 (SW rename):} The detection logic is filename-agnostic --- it looks for any\texttt{.js} signature in the \texttt{Referer} header. The alert fired correctly after renaming the SW.
 
-\textbf{E2 (slow polling):} With one request per 90 seconds, only
-one request accumulates per window, never reaching the threshold
-of~3.
-\emph{Countermeasure:} reduce the threshold to~1 (any single
-SW-context fetch triggers an alert), at the cost of potential false
-positives if a benign SW is deployed on the PLC.
-Alternatively, extend the window beyond 90 seconds.
+\textbf{E2 (slow polling):} The detection failed after slowing down the polling requests for the malware to one request per 90 seconds. This never reached the threshold of ~3 requests per 90 seconds.
 
-\textbf{E3 (Referer suppression):} Adding
-\texttt{referrerPolicy:~'no-referrer'} to the fetch options causes
-the browser to omit the \texttt{Referer} header entirely.
-With no Referer to inspect, Tier~1's second signal is eliminated.
-\emph{Countermeasure:} treat the \emph{absence} of a Referer header
-on a \texttt{Sec-Fetch-Dest: empty} request as suspicious, since
-legitimate page-originated fetch calls always include a Referer
-in standard browser configurations.
+\emph{Countermeasure:} This evasion can trivially be resolved by changing the threshold to ~1 for the entire duration of server execution. This may come at the cost of potential false negative. The detection window can also be extended beyond 90 seconds.
+
+\textbf{E3 (Referer suppression):} Adding the fetch option of
+\texttt{referrerPolicy:~'no-referrer'} in \texttt{sw.js}causes the browser to exclude the \texttt{Referer} header. Tier~1 detection does not function without the Referer to inspect. The detection failed.
+\emph{Countermeasure:} The detection logic may be modified to label the \emph{absence} of a Referer header on a \texttt{Sec-Fetch-Dest: empty} request as suspicious. This is possible since legitimate page-originated fetch calls in Chromium-based browsers (Brave, Chrome) include a Referer in same-origin request by default.
 
 % ---------------------------------------------------------------
 % VIII. Discussion
@@ -411,64 +364,30 @@ in standard browser configurations.
 
 \subsection{Replication Fidelity}
 
-Our E1 results reproduce the paper's SLOC and complexity figures
-within rounding error, validating the measurement methodology.
-The intermediate firmware versions provide new evidence that the
-codebase expansion was gradual, driven primarily by the v3.1.7 $\to$
-v3.09.04 transition (2019--2022), which added the plugin
-architecture, cloud connectivity, and Docker support.
+The E1 results of this study successfully replicated the paper's SLOC and complexity figures, validating the measurement methodology. This study also extended the complexity analysis by analysing two intermediate firmware versions, providing new evidence that the code base expansion was gradual. The increase in web-related content took place primarily during v3.1.7 $\to$ v3.09.04 transition (2019--2022), adding new features including cloud connectivity and Docker support.
 
-The E4 testbed successfully replicates all six resurrection steps
-and provides the first empirical confirmation of the hardware
-replacement survival claim.
-Our clarification of the ``24-hour cache limit'' as the SW update
-check interval (not CacheStorage eviction) resolves an ambiguity
-in the original paper.
+The E4 test environment for SW successfully demonstrates all six steps of the SW resurrection cycle. The study also looked into two related mechanisms to the paper's statement about ``24-hour cache limit'', revealing that CacheStorage eviction can \emph{only} take place from an explicit user action or storage pressure.
 
 \subsection{Limitations}
 
 \textbf{OpenPLC adaptation.}
-The most significant limitation is the absence of a CVE-based
-delivery vector on OpenPLC.
-Our manual injection simulates the \emph{effect} of the exploit
-chain but does not validate the \emph{delivery} phase.
-The SW scope is also confined to \texttt{/static/} rather than
-\texttt{/}, which limits the SW's ability to intercept all page
-fetches.
+The most notable limitation of this study is the absence of a CVE-based malware injection vector on OpenPLC. The manual injection method simulates the \emph{effect} of the exploit, but does not validate the \emph{injection} mechanism. Due to the Flask architecture of OpenPLC, the SW's scope is also limited to  \texttt{/static/} rather than \texttt{/}; this restricts its ability to intercept all page fetches.
 
 \textbf{Single browser tested.}
-The detector's Tier~1 signals (\texttt{Sec-Fetch-Dest} and
-\texttt{Referer} behavior) were validated on Brave (Chromium-based).
-Firefox and Safari may set these headers differently;
-cross-browser validation is left for future work.
+The detection logic for Tier~1 (\texttt{Sec-Fetch-Dest} and
+\texttt{Referer} behavior) was only validated on Brave browser, which is Chromium-based. Firefox and Safari may set the request headers differently, indicating that changes in detection logic may be necessary when running on these browsers.
 
 \textbf{False positive test scope.}
-Five minutes of normal operation is a limited evaluation.
-A production deployment would require multi-day testing across
-multiple operator workflows and network conditions.
+False positive test scope is limited to five minutes. A production deployment may necessitate multi-day testing, capturing the entire complexity of operator workflows.
 
 \textbf{Tier~2 and Tier~3 not rigorously evaluated.}
-We focused evaluation effort on Tier~1 as the primary contribution.
-Tier~2 (write rate) and Tier~3 (read-write latency) were implemented
-and observed to fire during attack scenarios but were not subjected
-to systematic false positive testing.
+This study focused on the evaluation of Tier~1, since it was considered to be the primary indicator of WB PLC malware. Tier~2 (write rate) and Tier~3 (read-write latency) were implemented and observed to 
 
 \subsection{Implications for ICS Defense}
 
-The detection gap identified by the paper is real but not
-insurmountable.
-Server-side behavioral detection using browser-generated Fetch
-Metadata headers offers a practical defense layer that requires
-no client-side instrumentation and no modification to the browser.
-The approach is deployable as a lightweight WAF module, consistent
-with the ``PLC-configured WAF'' countermeasure proposed in
-Table~VII of~\cite{ironspider2024}.
+The open detection problem stated in the original paper can be addressed by executing a server-side behavioural detection based on Fetch Metadata headers. Since the implementation takes place on the server side, no client-side modification is required for this approach.
 
-The evasion analysis reveals that the Referer header is the weaker
-of the two signals.
-A more robust design would combine Tier~1 with Content Security
-Policy (CSP) headers that restrict SW registration, or with
-Subresource Integrity (SRI) checks on served JavaScript files.
+The evasion experiment displays that the Referer header can be modified by SW to bypass the detection logic. A more robust design may combine Tier~1 logic with Content Security Policy (CSP) headers that restrict SW registration, or with Subresource Integrity (SRI) checks on the loaded JavaScript files.
 
 % ---------------------------------------------------------------
 % IX. Conclusion
@@ -476,29 +395,11 @@ Subresource Integrity (SRI) checks on served JavaScript files.
 \section{Conclusion}
 \label{sec:conclusion}
 
-We replicated key experiments from the IronSpider web-based PLC
-malware study, confirming the paper's firmware growth analysis,
-the full six-step SW resurrection cycle including hardware replacement
-survival, and the three core attack capabilities on an alternative
-PLC platform (OpenPLC).
-We clarified the ``24-hour cache limit'' as the SW script update
-check interval, not a CacheStorage eviction policy, providing a
-more precise characterization of the persistence window.
+This study replicated key experiments from the IronSpider WB PLC malware study, verifying the paper's analysis on PLC firmware's web content complexity, the full SW resurrection cycle including hardware replacement survival, and the three key attack capabilities on an alternative PLC environment (OpenPLC). This study also looked more into the ``24-hour cache limit'' of SW, confirming the SW persistence mechanism through the lense of SW update check interval and CacheStorage eviction.
 
-To address the paper's stated detection gap, we implemented a
-three-tier behavioral detector.
-Tier~1 achieves zero false positives by correlating two
-browser-generated headers (\texttt{Sec-Fetch-Dest: empty} and
-a \texttt{.js}-suffixed \texttt{Referer}) to identify SW polling
-loops.
-Two of three tested evasion techniques defeat Tier~1, but both
-have straightforward countermeasures: extending the detection
-window and treating absent Referer headers as suspicious.
+This paper implemented an example three-tier behavioural, runtime detector for IronSpider, which addresses the open problem of detection gap mentioned in the original paper. Tier~1 logic utilises two Fetch Metadata headers (\texttt{Sec-Fetch-Dest: empty} and a \texttt{.js}-suffixed \texttt{Referer}) to identify SW polling loops. Two of three tested evasion techinques prevent Tier~1 alarm, but both have straightforward countermeasures such as extending the detection window and treating empty Referer headers as potentially malicious.
 
-Future work includes cross-browser validation of the Fetch Metadata
-signals, integration with CSP-based SW registration restrictions,
-and multi-day false positive evaluation in a production-representative
-ICS environment.
+Future work incldues cross-browser validation of the Fetch Metadata headers, integration of Tier~1 with CSP-based SW registration restrictions, and multi-day false positive tests for a production-grade ICS environment.
 
 % ---------------------------------------------------------------
 % References
