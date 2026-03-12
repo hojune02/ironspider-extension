@@ -14,7 +14,7 @@
 % ---------------------------------------------------------------
 % Title / Authors
 % ---------------------------------------------------------------
-\title{Replication Study of Web-Based PLC Malware: Firmware Analysis, Service Worker Resurrection, and Behavioral Anomaly Detection}
+\title{Replication Study of Web-Based PLC Malware: Firmware Analysis, Service Worker Resurrection, and Behavioural Anomaly Detection}
 
 \author{
   \IEEEauthorblockN{Hojune Kim}
@@ -37,18 +37,18 @@
 % Abstract
 % ---------------------------------------------------------------
 \begin{abstract}
-This is a replication study of ``Compromising Industrial Processes using Web-Based PLC Malware'' (Pickern et al., NDSS 2024), which proposed IronSpider --- a web-based malware that persists within the web interface of modern programmable logic controllers (PLCs) and bypasses factory reset via a Service Worker resurrection scheme.  
+This is a replication study of ``Compromising Industrial Processes using Web-Based PLC Malware'' (Pickren et al., NDSS 2024), which proposed IronSpider --- a web-based malware that persists within the web interface of modern programmable logic controllers (PLCs) and bypasses factory reset via a Service Worker resurrection scheme.  
 %
-This study reproduces the paper's firmware complexity analysis (E1) across four WAGO 750-8XXX firmware versions ranging from 2019 to 2023, conducts additional qualitative analysis on firmware JavaScript API features, and created a standalone browser testbed for the full six-step resurrection cycle (E4) including survival of hardware replacement.
+This study reproduces the paper's firmware complexity analysis (E1) across four WAGO 750-8XXX firmware versions ranging from 2019 to 2023, conducts additional qualitative analysis on firmware JavaScript API features, and creates a standalone browser testbed for the full six-step resurrection cycle (E4) including survival of hardware replacement.
 %
-Furthermore, this study implements the three key attack capabilities inspired by IronSpider --- sensor spoofing, alarm supression, and actuator manipulation --- by manual malware injection, which is analogous to CVE-driven code injection in the paper.
+Furthermore, this study implements the three key attack capabilities inspired by IronSpider --- sensor spoofing, alarm suppression, and actuator manipulation --- by manual malware injection, which is analogous to CVE-driven code injection in the paper.
 %
-Finally, this study strives to solve the paper's open detection problem of web-based PLC malware by implementing a server-side runtime detector inside OpenPLC's Flask webserver. Tier~1 alert shows zero false positive over five minutes of normal operation by setting up detection logic for two browser-generated request headers: \texttt{Sec-Fetch-Dest: empty} and a \texttt{Referer} originating from a \texttt{.js} context. The detection technique is evaluated with three evasion methods, two of which defeat Tier~1 with suggestions on countermeasures. 
+Finally, this study strives to solve the paper's open detection problem of web-based PLC malware by implementing a server-side runtime detector inside OpenPLC's Flask webserver. Tier~1 alert shows zero false positive over five minutes of normal operation by setting up detection logic for two request headers: \texttt{Sec-Fetch-Dest: empty} and a \texttt{Referer} originating from a \texttt{.js} context. The detection technique is evaluated with three evasion methods, two of which defeat Tier~1 with suggestions on countermeasures. 
 \end{abstract}
 
 \begin{IEEEkeywords}
 PLC malware, industrial control systems, Service Worker, web security,
-behavioral detection, ICS
+behavioural detection, ICS
 \end{IEEEkeywords}
 
 % ---------------------------------------------------------------
@@ -56,11 +56,11 @@ behavioral detection, ICS
 % ---------------------------------------------------------------
 \section{Introduction}
 
-Industrial control systems (ICSs) are the backbone of critical infrastructures such as water treatment plant, power grids, and manufacturing factories. They have been considered to be free of web-based attack vectors, due to its traditional isolation from the open Internet. However, this assumption has become obsolete as modern PLCs gradually provide more support for browser-based human-machine interfaces (HMIs) and embedded web server, which allow for remote system monitoring and configuration. The boundary between operational technology (OT) and information technology (IT) is fading, and ICSs are now open to web-based attack.
+Industrial control systems (ICSs) are the backbone of critical infrastructures such as water treatment plants, power grids, and manufacturing factories. They have been considered to be free of web-based attack vectors, due to its traditional isolation from the open Internet. However, this assumption has become obsolete as modern PLCs gradually provide more support for browser-based human-machine interfaces (HMIs) and embedded web servers, which allow for remote system monitoring and configuration. The boundary between operational technology (OT) and information technology (IT) is fading, and ICSs are now open to web-based attack.
 
 Pickren et al.~\cite{ironspider2024} proposed IronSpider, a
 web-based PLC malware (WB PLC malware) that hinders the system entirely within the
-operator's browser. Unlike traditional PLC malware (e.g., Stuxnet~\cite{stuxnet}, HARVEY~\cite{}), IronSpider does not require prior knowledge of firmware or kernel exploits; it only utilises browser APIs to control the system as if it were a legitimate human operator. The paper demonstrates key attack capabilities such as sensor spoofing and actuator manipulation, along with a Service Worker (SW) resurrection mechanism that revives the malware after factory reset, surviving even hardware replacement. Another key finding is that four established JavaScript malware detectors (Cujo, Zozzle, JaSt, JStap) all failed to categorise IronSpider as malicious, since the malware does not contain any aggressive or syntactically suspicious code patterns \cite{ironspider2024}.
+operator's browser. Unlike traditional PLC malware (e.g., Stuxnet~\cite{stuxnet}, HARVEY~\cite{harvey2017}), IronSpider does not require prior knowledge of firmware or kernel exploits; it only utilises browser APIs to control the system as if it were a legitimate human operator. The paper demonstrates key attack capabilities such as sensor spoofing and actuator manipulation, along with a Service Worker (SW) resurrection mechanism that revives the malware after factory reset, surviving even hardware replacement. Another key finding is that four established JavaScript malware detectors (Cujo, Zozzle, JaSt, JStap) all failed to categorise IronSpider as malicious, since the malware does not contain any aggressive or syntactically suspicious code patterns \cite{ironspider2024}.
 
 This study contains a structured replication study conducted over
 19 days with four contributions:
@@ -70,9 +70,9 @@ This study contains a structured replication study conducted over
       This study builds a standalone Node.js/HTTPS testbed showing the full six-step resurrection process of WB PLC malware and demonstrate hardware replacement survival and the 24-hour cache limit of SWs.
 
   \item \textbf{OpenPLC capability demonstration.} 
-      This study implements the three key attack capabilities of IronSpider on OpenPLC via manual payload injection --- an adaptation which preserves the attack characteristics while acknowledging that CVE-driven code injection in OpenPLC is not feasible, unlike in the original WAGO case.
+      This study implements the three key attack capabilities of IronSpider on OpenPLC via manual payload injection --- an adaptation which preserves the attack characteristics while acknowledging that CVE-driven code injection in OpenPLC is not feasible, unlike in the original paper's case.
 
-  \item \textbf{Behavioral anomaly detection.} This study implements a server-side detector as a component of OpenPLC's Flask webserver, addressing the detection gap stated in the paper. The Tier~1 heuristic makes use of browser-generated Fetch metadata headers to detect SW constantly checking for the malware's presence, while keeping the number of false positives to zero.
+  \item \textbf{Behavioural anomaly detection.} This study implements a server-side detector as a component of OpenPLC's Flask webserver, addressing the detection gap stated in the paper. The Tier~1 heuristic makes use of browser-generated Fetch Metadata headers to detect SW constantly checking for the malware's presence, while keeping the number of false positives to zero.
 \end{enumerate}
 
 The remainder of the paper is organised as follows.
@@ -92,10 +92,10 @@ Section~\ref{sec:conclusion} concludes.
 
 \subsection{ICS Architecture and the PERA Model}
 
-Industrial control systems typically adopts the Purdue Enterprise Reference Architecture (PERA) model, which categorises assets into five levels: Level~0 (field devices and sensors),
+Industrial control systems typically adopt the Purdue Enterprise Reference Architecture (PERA) model, which categorises assets into five levels: Level~0 (field devices and sensors),
 Level~1 (basic control including PLCs, RTUs), Level~2 (supervisory control including
 HMIs, SCADA), Level~3 (site operations network), and Level~4 (enterprise
-network). WB PLC malware places itself entirely within the OT boundary (Level~2), spoofing HMI values and controlling actuators on its own.
+network). WB PLC malware places itself entirely within the OT boundary (Level~2), spoofing HMI values and controlling actuators.
 
 \subsection{Web-Based PLC Malware vs.\ Traditional PLC Malware}
 
@@ -112,7 +112,7 @@ A Service Worker (SW) is a JavaScript file that the browser registers as a persi
   \item \textbf{CacheStorage.} SWs can store data in
         \texttt{CacheStorage}, which persists without explicit user action or storage pressure.
   \item \textbf{Same-origin fetch privilege.} 
-        A SW registered on the PLC's web context can call any same-origin web API without cross-origin resourcce sharing (CORS) restriction, exploiting the operator's authenticated session.
+        A SW registered on the PLC's web context can call any same-origin web API without cross-origin resource sharing (CORS) restriction, exploiting the operator's authenticated session.
   \item \textbf{DOM bypass via \texttt{respondWith}.} 
         SWs do not have direct DOM access, but they can intercept HTTP responses and inject arbitrary JavaScript code. The injected code runs in the page context with full DOM access.
 \end{itemize}
@@ -134,14 +134,14 @@ The paper attempted at detecting IronSpider using four static JavaScript analyse
 The study uses two separate test environments:
 
 \begin{enumerate}
-  \item \textbf{E1 firmware analysis.} WAGO 750-8XXX firware images v3.0.39 (May 2019) and v4.02.13 (Mar 2023) are the two versions discussed in the original paper. This study additionally analyses two intermediate versions: v3.1.7 (Jul 2019) and v3.09.04 (Mar 2022). These firmware versions are analysed using the paper's published Docker container, using the SLOC and cyclomatic complexity tools.
+  \item \textbf{E1 firmware analysis.} WAGO 750-8XXX firmware images v3.0.39 (May 2019) and v4.02.13 (Mar 2023) are the two versions discussed in the original paper. This study additionally analyses two intermediate versions: v3.1.7 (Jul 2019) and v3.09.04 (Mar 2022). These firmware versions are analysed using the paper's published Docker container, with the same SLOC and cyclomatic complexity tools.
 
-  \item \textbf{E4 resurrection testbed.} This study creates a Node.js HTTPS server, which serves a simulated PLC dashboard. Three routes replicate the attack relevant server functionality: \texttt{GET /*} (static file server), \texttt{POST /reset} (factory reset: deletes \texttt{malware.js} from disk), and \texttt{POST /upload} (file write: analogue of CVE-2022-45140).
+  \item \textbf{E4 resurrection testbed.} This study creates a Node.js HTTPS server, which serves a simulated PLC dashboard. Three routes replicate the attack relevant server functionality: \texttt{GET /*} (static file server), \texttt{POST /reset} (factory reset: deletes \texttt{malware.js} from disk), and \texttt{POST /upload} (file write: analogue of CVE-2022-45140 mentioned in~\cite{ironspider2024}).
 \end{enumerate}
 
 \subsection{OpenPLC Adaptation}
 
-OpenPLC Runtime v3~\cite{openplc} is an open-source PLC with a Flask-based web interface, which provides a monitor/write API structure. This study installed a water pump ladder logic program (Structured Text) that controls a simulated pump relay (\texttt{\%QX0.0}) based on a water level sensor (\texttt{\%IW0}) with configurable high/low setpoints and an alarm output (\texttt{\%QX0.1}).
+OpenPLC Runtime v3~\cite{openplc} is an open-source PLC with a Flask-based web interface, which provides a monitor/write API structure. This study installs a water pump ladder logic program (Structured Text) that controls a simulated pump relay (\texttt{\%QX0.0}) based on a water level sensor (\texttt{\%IW0}) with configurable high/low setpoints and an alarm output (\texttt{\%QX0.1}).
 
 \textbf{Adaptation from paper.} The original paper exploits the three-CVE chain to deliver the malware inside the PLC's web directory. OpenPLC's Flask architecture lacks such features; Flask's \texttt{static/} folder is the structural equivalent, but this confines SW scope to \texttt{/static/} rather than \texttt{/}. Accordingly, this study manually injects both the SW registration and IronSpider capabilities directly into \texttt{static/} and loading them on OpenPLC's monitoring page template (\texttt{pages.py}). This simulates the \emph{effect} of the CVE-based delivery, without replicating the delivery mechanism itself. This marks a clear distinction from the paper's original scenario.
 
@@ -165,7 +165,7 @@ The rationale behind setting up Tier~1 is explained in detail in Section ~\ref{s
 
 \subsection{SLOC and Cyclomatic Complexity}
 
-Table~\ref{tab:e1} shows the SLOC and cyclomatic complexity measurements for all four WAGO 750-8XXX firmware versions.The two endpoints (v3.0.39 and v4.02.13) show the paper's reported figures that are verified by this study; the two intermediate versions (v3.1.7 and v3.09.04) are the extension.
+Table~\ref{tab:e1} shows the SLOC and cyclomatic complexity measurements for all four WAGO 750-8XXX firmware versions. The two endpoints (v3.0.39 and v4.02.13) show the paper's reported figures that are verified by this study; the two intermediate versions (v3.1.7 and v3.09.04) are the extension.
 
 \begin{table}[ht]
 \centering
@@ -218,7 +218,7 @@ API documentation &  1 & OpenAPI self-describing REST \\
 \end{tabular}
 \end{table}
 
-The newly added features such as AIDE intrusion detection, firewall configuration, and certificate management are controlled by the smae web interface that the CVE chain can compromise. There is a possiblity of these tools being exploited by an attacker. Meanwhile, Docker on PLCs and persistent MQTT cloud channels may suggest new attack surface that do not exist in the 2019 firmware.
+The newly added features such as AIDE intrusion detection, firewall configuration, and certificate management are controlled by the smae web interface that the CVE chain can compromise. There is a possibility of these tools being exploited by an attacker. Meanwhile, Docker on PLCs and persistent MQTT cloud channels may suggest new attack surface that do not exist in the 2019 firmware.
 
 % ---------------------------------------------------------------
 % V. Service Worker Resurrection Testbed (E4)
@@ -233,13 +233,13 @@ This study verified all the steps of the malware resurrection cycle stated in Se
 \begin{enumerate}
   \item \textbf{SW registration.} When loading the page for the first time, the browser fetches \texttt{sw.js} and registers it at scope \texttt{/}. Looking at DevTools confirms ``activated and is running.''
   \item \textbf{Payload delivery.} As \texttt{malware.js} is injected, it starts to execute display spoofing (sensor values turn green) and exfiltration simulation for credentials logged to console.
-  \item \textbf{Factory reset.} \texttt{malware.js} from the server, simulating a factor reset. The SW remains registered in the browser profile.
+  \item \textbf{Factory reset.} \texttt{malware.js} from the server, simulating a factory reset. The SW remains registered in the browser profile.
   \item \textbf{SW detects absence.} The SW's \texttt{setInterval} fetches for \texttt{/malware.js} within 5 seconds, and receives HTTP~404.
-  \item \textbf{Re-upload.} The SW retrieves the payload from\texttt{CacheStorage} and POSTs it to \texttt{/upload} (this is analogous to the original paper's CVE chain).Server log confirms: ``\texttt{RESURRECTION: wrote malware.js}.''
+  \item \textbf{Re-upload.} The SW retrieves the payload from \texttt{CacheStorage} and POSTs it to \texttt{/upload} (this is analogous to the original paper's CVE chain). Server log confirms: ``\texttt{RESURRECTION: wrote malware.js}.''
   \item \textbf{Payload re-execution.} The SW sends \texttt{postMessage(\{type:~'RESURRECTED'\})} to all open tabs. Display spoofing resumes with the re-injected malware.
 \end{enumerate}
 
-All six steps above executed autonomously wihtin one SW polling interval of 5~seconds. This confirms the paper's claim on malware resurrection after the factory reset.
+All six steps above executed autonomously within one SW polling interval of 5~seconds. This confirms the paper's claim on malware resurrection after the factory reset.
 
 \subsection{Hardware Replacement Survival}
 
@@ -280,30 +280,30 @@ The injected malware wraps the response from \texttt{/monitor-update} by gaining
 
 \subsection{Capability 2: Alarm Suppression via Spoofing}
 
-When the water level exceeds the alarm threshold of 80, the PLC sets \texttt{alarm\_active} to \texttt{TRUE}. The spoofing The spoofing function detects the \texttt{bool\_true.png} indicator and replaces with \texttt{bool\_false.png} in the DOM. The operator is not able to see the actual alarm, potentially ignoring a dangerous situation.
+When the water level exceeds the alarm threshold of 80, the PLC sets \texttt{alarm\_active} to \texttt{TRUE}. The spoofing function detects the \texttt{bool\_true.png} indicator and replaces with \texttt{bool\_false.png} in the DOM. The operator is not able to see the actual alarm, potentially ignoring a dangerous situation.
 
 \subsection{Capability 3: Actuator Manipulation}
 
 The malware runs a \texttt{setInterval} loop, calling \texttt{/point-write?value=1\&address=\%QX0.0} every 500\,ms. This changes the actual Boolean value for the pump relay, turning it ON regardless of the ladder logic's output. This bypasses the PLC control loop by using the web API.
 
-While testing for this capability, intermittent toggling of\texttt{pump\_running} between TRUE and FALSE was observed. This is due to the PLC's scan cycle writing the actual, computed value to the same address (\texttt{\%QX0.0}). In a real deployment, combining actuator manipulation while spoofing the pump relay reading would hide the override from the operator entirely.
+While testing for this capability, intermittent toggling of \texttt{pump\_running} between TRUE and FALSE was observed. This is due to the PLC's scan cycle writing the actual, computed value to the same address (\texttt{\%QX0.0}). In a real deployment, combining actuator manipulation while spoofing the pump relay reading would hide the override from the operator entirely.
 
 % ---------------------------------------------------------------
-% VII. Behavioral Anomaly Detection
+% VII. Behavioural Anomaly Detection
 % ---------------------------------------------------------------
-\section{Behavioral Anomaly Detection}
+\section{Behavioural Anomaly Detection}
 \label{sec:detection}
 
 \subsection{Design Rationale for Tier~1}
 
-The paper leaves detection of IronSpider as an ``open problem'' since IronSpider uses only legitimate browser API with no suspicious patterns detected by JavaScript analysers. This study observed that while the \emph{payload} itself is indistinguishable from benign JavaScript, the \emph{SW polling loop} for the malware may produce distinguialbe HTTP request metadata useful for detection.
+The paper leaves detection of IronSpider as an ``open problem'' since IronSpider uses only legitimate browser API with no suspicious patterns detected by JavaScript analysers. This study observed that while the \emph{payload} itself is indistinguishable from benign JavaScript, the \emph{SW polling loop} for the malware may produce distinguishable HTTP request metadata useful for detection.
 
 This study focused on detecting SW-originated fetch using two browser-generated headers:
 
 \begin{itemize}
   \item \textbf{\texttt{Sec-Fetch-Dest: empty}.} This header is set for all \texttt{fetch()} API calls according to the W3C Fetch Metadata specification, while a \texttt{<script src>} tag sets \texttt{Sec-Fetch-Dest: script} instead. JavaScript cannot forge or suppress this header.
 
-  \item \textbf{\texttt{Referer} ending in \texttt{.js}.} \texttt{fetch()} calls initiated by SW sets the SW script URL as Referer (e.g., \texttt{/static/sw.js} in OpenPLC's case). Page-originated \texttt{fetch()} calls has the page URL as the value for Referer (e.g., \texttt{/monitoring}), which does not end in \texttt{.js}.
+  \item \textbf{\texttt{Referer} ending in \texttt{.js}.} \texttt{fetch()} calls initiated by SW sets the SW script URL as Referer (e.g., \texttt{/static/sw.js} in OpenPLC's case). Page-originated \texttt{fetch()} calls have the page URL as the value for Referer (e.g., \texttt{/monitoring}), which does not end in \texttt{.js}.
 
 \end{itemize}
 
@@ -314,7 +314,7 @@ It was found that only having one of the signals inside the detector logic is no
 The final design for Tier~1 logic was devised after two failed attempts:
 
 \begin{enumerate}
-  \item \textbf{Count-based (rejected):} This strived to count all GET requests to \texttt{/static/malware.js}. Not only did it has the name of the malware hardcoded in the detector, but also it falsely categorised the monitoring page's \texttt{<script src>} load as malicious.
+  \item \textbf{Count-based (rejected):} This strived to count all GET requests to \texttt{/static/malware.js}. Not only did it have the name of the malware hardcoded in the detector, but also it falsely categorised the monitoring page's \texttt{<script src>} load as malicious.
 
   \item \textbf{Cache-Control filter (rejected):} Since the SW polls for the malware using \texttt{cache:~'no-store'}, the request was expected to have \texttt{Cache-Control:~no-cache} in its header. However, this was not included in the actual HTTP request. This is likely due to \texttt{sw.js} setting \texttt{cache:~'no-store'} instead of \texttt{'Cache-Control':~'no-store'}. The cache option controls browser caching behavior internally, not necessarily the HTTP headers.
 \end{enumerate}
@@ -346,14 +346,15 @@ Referer suppress & \texttt{no-referrer} policy & No \\
 \end{tabular}
 \end{table}
 
-\textbf{E1 (SW rename):} The detection logic is filename-agnostic --- it looks for any\texttt{.js} signature in the \texttt{Referer} header. The alert fired correctly after renaming the SW.
+\textbf{E1 (SW rename):} The detection logic is filename-agnostic --- it looks for any \texttt{.js} signature in the \texttt{Referer} header. The alert fired correctly after renaming the SW.
 
 \textbf{E2 (slow polling):} The detection failed after slowing down the polling requests for the malware to one request per 90 seconds. This never reached the threshold of ~3 requests per 90 seconds.
 
 \emph{Countermeasure:} This evasion can trivially be resolved by changing the threshold to ~1 for the entire duration of server execution. This may come at the cost of potential false negative. The detection window can also be extended beyond 90 seconds.
 
 \textbf{E3 (Referer suppression):} Adding the fetch option of
-\texttt{referrerPolicy:~'no-referrer'} in \texttt{sw.js}causes the browser to exclude the \texttt{Referer} header. Tier~1 detection does not function without the Referer to inspect. The detection failed.
+\texttt{referrerPolicy:~'no-referrer'} in \texttt{sw.js} causes the browser to exclude the \texttt{Referer} header. Tier~1 detection does not function without the Referer to inspect. The detection failed.
+
 \emph{Countermeasure:} The detection logic may be modified to label the \emph{absence} of a Referer header on a \texttt{Sec-Fetch-Dest: empty} request as suspicious. This is possible since legitimate page-originated fetch calls in Chromium-based browsers (Brave, Chrome) include a Referer in same-origin request by default.
 
 % ---------------------------------------------------------------
@@ -381,9 +382,9 @@ The detection logic for Tier~1 (\texttt{Sec-Fetch-Dest} and
 False positive test scope is limited to five minutes. A production deployment may necessitate multi-day testing, capturing the entire complexity of operator workflows.
 
 \textbf{Tier~2 and Tier~3 not rigorously evaluated.}
-This study focused on the evaluation of Tier~1, since it was considered to be the primary indicator of WB PLC malware. Tier~2 (write rate) and Tier~3 (read-write latency) were implemented and observed to 
+This study focused on the evaluation of Tier~1, since it was considered to be the primary indicator of WB PLC malware. Tier~2 (write rate) and Tier~3 (read-write latency) were implemented and observed to produce alerts, but they are not rigorously tested for false positives.
 
-\subsection{Implications for ICS Defense}
+\subsection{Implications for ICS Defence}
 
 The open detection problem stated in the original paper can be addressed by executing a server-side behavioural detection based on Fetch Metadata headers. Since the implementation takes place on the server side, no client-side modification is required for this approach.
 
@@ -395,11 +396,11 @@ The evasion experiment displays that the Referer header can be modified by SW to
 \section{Conclusion}
 \label{sec:conclusion}
 
-This study replicated key experiments from the IronSpider WB PLC malware study, verifying the paper's analysis on PLC firmware's web content complexity, the full SW resurrection cycle including hardware replacement survival, and the three key attack capabilities on an alternative PLC environment (OpenPLC). This study also looked more into the ``24-hour cache limit'' of SW, confirming the SW persistence mechanism through the lense of SW update check interval and CacheStorage eviction.
+This study replicated key experiments from the IronSpider WB PLC malware study, verifying the paper's analysis on PLC firmware's web content complexity, the full SW resurrection cycle including hardware replacement survival, and the three key attack capabilities on an alternative PLC environment (OpenPLC). This study also looked more into the ``24-hour cache limit'' of SW, confirming the SW persistence mechanism through the lens of SW update check interval and CacheStorage eviction.
 
-This paper implemented an example three-tier behavioural, runtime detector for IronSpider, which addresses the open problem of detection gap mentioned in the original paper. Tier~1 logic utilises two Fetch Metadata headers (\texttt{Sec-Fetch-Dest: empty} and a \texttt{.js}-suffixed \texttt{Referer}) to identify SW polling loops. Two of three tested evasion techinques prevent Tier~1 alarm, but both have straightforward countermeasures such as extending the detection window and treating empty Referer headers as potentially malicious.
+This paper implemented an example three-tier behavioural, runtime detector for IronSpider, which addresses the open problem of detection gap mentioned in the original paper. Tier~1 logic utilises two Fetch Metadata headers (\texttt{Sec-Fetch-Dest: empty} and a \texttt{.js}-suffixed \texttt{Referer}) to identify SW polling loops. Two of three tested evasion techniques prevent Tier~1 alarm, but both have straightforward countermeasures such as extending the detection window and treating empty Referer headers as potentially malicious.
 
-Future work incldues cross-browser validation of the Fetch Metadata headers, integration of Tier~1 with CSP-based SW registration restrictions, and multi-day false positive tests for a production-grade ICS environment.
+Future work includes cross-browser validation of the Fetch Metadata headers, integration of Tier~1 with CSP-based SW registration restrictions, and multi-day false positive tests for a production-grade ICS environment.
 
 % ---------------------------------------------------------------
 % References
