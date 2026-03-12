@@ -14,7 +14,7 @@ The list below contains an overview on my replication and extension study. The b
     - **Conducted SLOC & complexity analyses on two intermediate WAGO firmwares (v3.01.07 and v3.09.04) and qualitative analysis on key JS files added to v4.09.13 ([Day 5](notes/labnotebook.md/#day-5-feb-21-2026))**
 - E2, 3: Conceptual IronSpider demonstration on OpenPLC
 - E4: Service Worker resurrection testbed + **Behavioural anomaly detection extension**
-    - **Implemented a standalone Node.js testbed for the full SW resurrection cycle ([`E4-service-worker`](E4-service-worker/))**
+    - Implemented a standalone Node.js testbed for the full SW resurrection cycle ([`E4-service-worker`](E4-service-worker/))
     - **Implemented a prototype server-side behavioural detector for WB PLC malware, addressing the open problem mentioned in the paper ([`OpenPLC_v3/webserver/ironspider_detector.py`](OpenPLC_v3/webserver/ironspider_detector.py))**
 
 ## Status
