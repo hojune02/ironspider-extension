@@ -4,7 +4,7 @@ Replication and extension study of *Compromising Industrial Processes using Web-
 
 **Authors of original paper:** Ryan Pickren, Tohid Shekari, Saman Zonouz, Raheem Beyah - Georgia Institute of Technology
 
-**This replication by:** Hojune Kim, an undergraduate intern at [KAIST CyPhy Lab](https://www.cyphy.kaist.ac.kr/)
+**This replication & extension study by:** Hojune Kim, an undergraduate intern at [KAIST CyPhy Lab](https://www.cyphy.kaist.ac.kr/)
 
 ## What This Project Contains
 
@@ -13,7 +13,9 @@ The list below contains an overview on my replication and extension study. The b
 - E1: WAGO firmware growth analysis (**extended timeline & qualitative analysis**)
     - **Conducted SLOC & complexity analyses on two intermediate WAGO firmwares (v3.01.07 and v3.09.04) and qualitative analysis on key JS files added to v4.09.13 ([Day 5](notes/labnotebook.md/#day-5-feb-21-2026))**
 - E2, 3: Conceptual IronSpider demonstration on OpenPLC
-- E4: Service Worker resurrection testbed + **Behavioral anomaly detection extension**
+- E4: Service Worker resurrection testbed + **Behavioural anomaly detection extension**
+    - **Implemented a standalone Node.js testbed for the full SW resurrection cycle ([`E4-service-worker`](E4-service-worker/))**
+    - **Implemented a prototype server-side behavioural detector for WB PLC malware, addressing the open problem mentioned in the paper ([`OpenPLC_v3/webserver/ironspider_detector.py`](OpenPLC_v3/webserver/ironspider_detector.py))**
 
 ## Status
-🔄 In progress - started Feb 17, 2026
+✅ Completed - started on Feb 17, 2026 | finished on Mar 12, 2026
